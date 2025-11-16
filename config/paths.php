@@ -121,6 +121,7 @@ define('HEADER_JS', JS_URL . 'header.js');
 define('FOOTER_JS', JS_URL . 'footer.js');
 define('SCROLL_PROGRESS_JS', JS_URL . 'scroll-progress.js');
 define('INDEX_JS', JS_URL . 'index.js');
+define('ABOUT_JS', JS_URL . 'about.js');
 define('PROJECTS_JS', JS_URL . 'projects.js');
 define('NOTES_JS', JS_URL . 'notes.js');
 define('CONTACT_JS', JS_URL . 'contact.js');

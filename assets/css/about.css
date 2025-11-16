@@ -1,0 +1,67 @@
+/* === Animations === */
+@keyframes slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-left,
+.slide-right {
+  opacity: 0;
+  transition: all 0.8s ease-out;
+}
+
+.slide-left.active {
+  animation: slide-left 1s ease-out forwards;
+}
+.slide-right.active {
+  animation: slide-right 1s ease-out forwards;
+}
+
+/* Floating glow effect for profile */
+@keyframes float-glow {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    transform: translateY(-10px);
+    box-shadow: 0 0 40px rgba(239, 68, 68, 0.7);
+  }
+}
+.float-glow {
+  animation: float-glow 4s ease-in-out infinite;
+}
+
+@media (max-width: 640px) {
+  .fade-up {
+    transition-duration: 0.5s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up,
+  .slide-left,
+  .slide-right {
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+}
