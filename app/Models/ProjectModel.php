@@ -1,193 +1,278 @@
 <?php
 
-require_once ROOT_PATH . "app/Services/CacheService.php";
+/**
+ * ProjectModel
+ *
+ * Enterprise-grade project model with:
+ * - DB → cache → defaults fallback
+ * - Zero-failure architecture
+ * - Strong defensive layers
+ * - Pagination with safe filtering
+ */
+
 
 class ProjectModel {
+    private int $defaultTTL = 3600; // 1 hour cache
 
-    private $cacheKeyFeatured = "featured_projects";
-    private $cacheKeyAll = "projects_all";
 
-    /**
-     * Featured projects (Home page)
-     */
-    public function featured()
-    {
-        if ($cache = CacheService::load($this->cacheKeyFeatured)) return $cache;
-
-        $rows = [];
-
-        try {
-            $pdo = DB::getInstance()->pdo();
-
-            $stmt = $pdo->prepare("SELECT * FROM projects WHERE is_active = 1 AND is_featured = 1 ORDER BY id DESC");
-            $stmt->execute();
-
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        } catch (Throwable $e) {
-            app_log("ProjectModel:featured() failed", "error", ['error' => $e->getMessage()]);
-            $rows = [];
-        }
-
-        // 3. Fallback defaults (never break page)
-        if (!$rows) {
-            $rows = $this->defaults();
-        }
-
-        CacheService::save($this->cacheKeyFeatured, $rows);
-
-        return $rows;
+    public function __construct(){
+        require_once ROOT_PATH . "app/Services/CacheService.php";
     }
 
     /**
-     * Fetch ALL active projects using CacheService
+     * Load multiple rows with defaults fallback
      */
-    public function getAllActive()
+    private function loadMultiple(string $key, callable $dbFn, callable $defaultFn): array
     {
-        if ($cache = CacheService::load($this->cacheKeyAll))
-            return $cache;
-
-        $rows = [];
-
-        try {
-            $pdo = DB::getInstance()->pdo();
-
-            $stmt = $pdo->prepare("
-                SELECT * 
-                FROM projects
-                WHERE is_active = 1
-                ORDER BY sort_order ASC, id DESC
-            ");
-            $stmt->execute();
-
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        } catch (Throwable $e) {
-            app_log("ProjectModel:getAllActive() failed", "error", ['error' => $e->getMessage()]);
-            $rows = [];
+        // 1. CACHE
+        if ($cached = CacheService::load($key)) {
+            return $cached;
         }
 
-        CacheService::save($this->cacheKeyAll, $rows);
-        return $rows;
+        // 2. DB
+        try {
+            $rows = $dbFn();
+            if (!empty($rows)) {
+                CacheService::save($key, $rows, $this->defaultTTL);
+                return $rows;
+            }
+        } catch (Throwable $e) {
+            app_log("ProjectModel loadMultiple error ({$key}): " . $e->getMessage(), "error");
+        }
+
+        // 3. DEFAULTS
+        return $defaultFn();
     }
 
+
     /**
-     * Pagination + tech filtering + featured filtering
+     * Load a single record table with defaults
      */
-    public function fetchActiveProjects($params = [])
+    private function loadSingle(string $key, callable $dbFn, callable $defaultFn): array
+    {
+        if ($cached = CacheService::load($key)) {
+            return $cached;
+        }
+
+        try {
+            $row = $dbFn();
+            if (!empty($row)) {
+                CacheService::save($key, $row, $this->defaultTTL);
+                return $row;
+            }
+        } catch (Throwable $e) {
+            app_log("ProjectModel loadSingle error ({$key}): " . $e->getMessage(), "error");
+        }
+
+        return $defaultFn();
+    }
+
+
+    /* ============================================================
+    * FEATURED PROJECTS (Home page)
+    * ============================================================ */
+
+    public function getFeatured(): array
+    {
+        return $this->loadMultiple(
+            "projects_featured",
+
+            // DB FUNCTION
+            function () {
+                $pdo = DB::getInstance()->pdo();
+                $stmt = $pdo->prepare("
+                    SELECT *
+                    FROM projects
+                    WHERE is_active = 1 AND is_featured = 1
+                    ORDER BY sort_order ASC, id DESC
+                ");
+                $stmt->execute();
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            },
+
+            // DEFAULTS FUNCTION
+            function () {
+                return $this->defaultProjects();
+            }
+        );
+    }
+
+    /* ============================================================
+     * ALL ACTIVE PROJECTS (fallback layer)
+     * ============================================================ */
+
+    public function getAllActive(): array
+    {
+        return $this->loadMultiple(
+            "projects_all",
+
+            function () {
+                $pdo = DB::getInstance()->pdo();
+                $stmt = $pdo->prepare("
+                    SELECT *
+                    FROM projects
+                    WHERE is_active = 1
+                    ORDER BY sort_order ASC, id DESC
+                ");
+                $stmt->execute();
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            },
+
+            function () {
+                return $this->defaultProjects();
+            }
+        );
+    }
+
+    /* ============================================================
+     * MAIN QUERY: Pagination + Filters (works even if DB missing)
+     * ============================================================ */
+
+    public function fetchActiveProjects(array $params): array
     {
         $offset   = $params['offset'] ?? 0;
         $limit    = $params['limit'] ?? 12;
         $tech     = $params['tech'] ?? null;
         $featured = $params['featured'] ?? false;
 
-        $where = "WHERE p.is_active = 1";
-        $bind  = [];
+        try {
+            /* -------- Build WHERE -------- */
+            $where = "WHERE p.is_active = 1";
+            $bind  = [];
+            $join  = "";
 
-        if ($featured)
-            $where .= " AND p.is_featured = 1";
+            if ($featured) {
+                $where .= " AND p.is_featured = 1";
+            }
 
-        $join = "";
+            if ($tech) {
+                $join = "LEFT JOIN project_tech pt ON pt.project_id = p.id";
+                $where .= " AND pt.tech_name LIKE :tech";
+                $bind[":tech"] = "%{$tech}%";
+            }
+
+            $sql = "
+                SELECT SQL_CALC_FOUND_ROWS p.*
+                FROM projects p
+                {$join}
+                {$where}
+                ORDER BY p.sort_order ASC, p.id DESC
+                LIMIT :limit OFFSET :offset
+            ";
+
+            $pdo = DB::getInstance()->pdo();
+            $stmt = $pdo->prepare($sql);
+
+            foreach ($bind as $k => $v) {
+                $stmt->bindValue($k, $v);
+            }
+
+            $stmt->bindValue(":limit",  (int)$limit,  PDO::PARAM_INT);
+            $stmt->bindValue(":offset", (int)$offset, PDO::PARAM_INT);
+
+            $stmt->execute();
+
+            $items = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+            $total = (int)($pdo->query("SELECT FOUND_ROWS()")->fetchColumn() ?? 0);
+
+            return [
+                "items" => $items,
+                "total" => $total
+            ];
+        }
+
+        catch (Throwable $e) {
+            app_log("ProjectModel fetchActiveProjects DB ERROR: " . $e->getMessage(), "error");
+        }
+
+        /* ============================================================
+         * DB FAILURE → FALLBACK TO CACHED ALL PROJECTS OR DEFAULTS
+         * ============================================================ */
+
+        $fallback = CacheService::load("projects_all");
+
+        if (empty($fallback)) {
+            $fallback = $this->defaultProjects(); // ultimate fallback
+        }
+
+        // Apply filters manually
+        $filtered = $fallback;
+
+        if ($featured) {
+            $filtered = array_filter($filtered, fn($p) => ($p['is_featured'] ?? 0) == 1);
+        }
 
         if ($tech) {
-            $join = "LEFT JOIN project_tech pt ON pt.project_id = p.id";
-            $where .= " AND pt.tech_name LIKE :tech";
-            $bind[':tech'] = "%{$tech}%";
+            $filtered = array_filter($filtered, fn($p) =>
+                stripos($p['technologies'] ?? "", $tech) !== false
+            );
         }
 
-        $sql = "
-            SELECT SQL_CALC_FOUND_ROWS p.*
-            FROM projects p
-            $join
-            $where
-            ORDER BY p.sort_order ASC, p.id DESC
-            LIMIT :limit OFFSET :offset
-        ";
+        $total = count($filtered);
+        $items = array_slice($filtered, $offset, $limit);
 
-        try {
-            $st = safe_prepare($sql);
-
-            foreach ($bind as $key => $value)
-                safe_bind($st, $key, $value);
-
-            safe_bind($st, ':limit',  (int)$limit,  PDO::PARAM_INT);
-            safe_bind($st, ':offset', (int)$offset, PDO::PARAM_INT);
-
-            safe_execute($st);
-
-            $items = safe_fetch_all($st);
-            $total = safe_fetch(safe_query("SELECT FOUND_ROWS()"))["FOUND_ROWS()"] ?? 0;
-
-            return ["items" => $items, "total" => $total];
-
-        } catch (Throwable $e) {
-
-            app_log("ProjectModel:fetchActiveProjects failed", "error", [
-                "error"  => $e->getMessage(),
-                "params" => $params
-            ]);
-
-            // FALLBACK to cached "all projects"
-            $all = CacheService::load($this->cacheKeyAll);
-            if (!$all) return ["items" => [], "total" => 0];
-
-            // Filter in PHP fallback
-            if ($featured)
-                $all = array_filter($all, fn($p) => $p['is_featured'] == 1);
-
-            if ($tech)
-                $all = array_filter($all, fn($p) => stripos($p['technologies'] ?? "", $tech) !== false);
-
-            $total = count($all);
-            $items = array_slice($all, $offset, $limit);
-
-            return ["items" => $items, "total" => $total];
-        }
+        return [
+            "items" => array_values($items),
+            "total" => $total
+        ];
     }
 
-    /**
-     * Fetch project's tech list
-     */
-    public function getTechList($projectId)
+    /* ============================================================
+     * TECH LIST (safe fallback)
+     * ============================================================ */
+
+    public function getTechList(int $projectId): array
     {
         try {
             $pdo = DB::getInstance()->pdo();
-
             $stmt = $pdo->prepare("
-                SELECT tech_name, color_class 
-                FROM project_tech 
+                SELECT tech_name, color_class
+                FROM project_tech
                 WHERE project_id = ?
             ");
             $stmt->execute([$projectId]);
-
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        } catch (Throwable $e) {
-            app_log("ProjectModel:getTechList() failed", "error", ['project_id' => $projectId]);
-            return [];
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
+        catch (Throwable $e) {
+            app_log("ProjectModel getTechList ERROR: " . $e->getMessage(), "error");
+            return []; // always safe
         }
     }
 
-    private function defaults()
+    /* ============================================================
+     * DEFAULT PROJECT LIST (non-empty guaranteed)
+     * ============================================================ */
+
+    public function defaultProjects(): array
     {
         return [
             [
-                "title"       => "Portfolio Website",
-                "description" => "A dynamic PHP + MySQL portfolio site with caching, MVC, and enterprise structure.",
-                "image_path"  => IMG_URL . "default-project.jpg",
-                "project_link" => "#"
+                "id" => 0,
+                "title" => "Portfolio Website",
+                "description" => "Dynamic PHP + MySQL website with enterprise caching, controllers & models.",
+                "image_path" => IMG_URL . "default-project.jpg",
+                "project_link" => "#",
+                "sort_order" => 1,
+                "is_featured" => 1
             ],
             [
-                "title"       => "E-Commerce Backend",
-                "description" => "Advanced cart system, user roles, and secure checkout with PHP PDO.",
-                "image_path"  => IMG_URL . "default-project.jpg",
-                "project_link" => "#"
+                "id" => 0,
+                "title" => "E-Commerce Backend",
+                "description" => "Cart system, product management, authentication & admin panel.",
+                "image_path" => IMG_URL . "default-project.jpg",
+                "project_link" => "#",
+                "sort_order" => 2,
+                "is_featured" => 0
             ],
             [
-                "title"       => "Admin Dashboard UI",
-                "description" => "Tailwind + JS dashboard with charts, tables, stats, and dark mode.",
-                "image_path"  => IMG_URL . "default-project.jpg",
-                "project_link" => "#"
+                "id" => 0,
+                "title" => "Analytics Dashboard",
+                "description" => "Tailwind + PHP analytics dashboard with charts & API integration.",
+                "image_path" => IMG_URL . "default-project.jpg",
+                "project_link" => "#",
+                "sort_order" => 3,
+                "is_featured" => 0
             ]
         ];
     }

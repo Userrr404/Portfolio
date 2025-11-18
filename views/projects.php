@@ -1,13 +1,10 @@
 <?php
-require_once __DIR__ . '/../config/paths.php';
+require_once __DIR__ . '/../config/config.php';
 require_once INCLUDES_PATH . 'logger.php';
 require_once CORE_PATH . 'Controller.php';
 require_once CORE_PATH . 'App.php';
 
-$data = App::run("ProjectController@index");
-
-
-// Controller returns all required data
+// Controller returns all required data with DB → Cache → Defaults
 $data = App::run("ProjectController@index");
 
 $projects   = $data["projects"];
@@ -51,52 +48,47 @@ require_once LAYOUT_HEAD_FILE;
         <p class="text-gray-400">Try different filters or check back later.</p>
       </div>
     <?php else: ?>
-
-        
-            <?php foreach ($projects as $p): ?>
-            <div class="bg-[#1E293B] rounded-2xl overflow-hidden shadow-lg hover:scale-[1.03] transition-transform duration-500 group">
-          
-                <div class="relative aspect-[4/3]">
-                    <img src="<?= esc(img_url($p['image_path'])) ?>" alt="<?= esc($p['title']) ?>" 
-                        class="absolute inset-0 w-full h-full object-cover group-hover:opacity-80 transition-opacity">
-                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <a href="<?= esc($p['project_link']) ?>"
-                            class="bg-accent text-darkbg px-5 py-2 rounded-full font-semibold hover:bg-red-600 transition">
-                            View Project
-                        </a>
-                    </div>
-                </div>
-                <div class="p-5 sm:p-6">
-                    <h3 class="text-xl sm:text-2xl font-bold text-accent mb-2"><?= esc($p['title']) ?></h3>
-                    <p class="text-gray-300 mb-4 text-sm sm:text-base leading-relaxed"><?= esc($p['description']) ?></p>
-
-                <div class="flex flex-wrap gap-2">
-                    <?php foreach ($techList[$p['id']] as $t): ?>
-                        <span class="<?= esc($t['color_class']) ?> px-3 py-1 rounded-full bg-gray-800 text-xs">
-                            <?= esc($t['tech_name']) ?>
-                        </span>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
-    <?php endforeach; ?>
-  </div>
-
-      <!-- Pagination -->
-      <?php if ($totalPages > 1): ?>
-        <div class="mt-10 flex justify-center gap-2">
-            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-              <a href="?page=<?= $i ?>"
-                 class="px-3 py-1 rounded <?= $i == $page ? 'bg-accent text-darkbg' : 'bg-gray-700 text-gray-200' ?>">
-                 <?= $i ?>
+      <?php foreach ($projects as $p): ?>
+        <div class="bg-[#1E293B] rounded-2xl overflow-hidden shadow-lg hover:scale-[1.03] transition-transform duration-500 group">
+          <div class="relative aspect-[4/3]">
+            <img src="<?= esc(img_url($p['image_path'])) ?>" alt="<?= esc($p['title']) ?>" 
+                  class="absolute inset-0 w-full h-full object-cover group-hover:opacity-80 transition-opacity">
+            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <a href="<?= esc($p['project_link']) ?>"
+                  class="bg-accent text-darkbg px-5 py-2 rounded-full font-semibold hover:bg-red-600 transition">
+                    View Project
               </a>
-            <?php endfor; ?>
+            </div>
+          </div>
+          <div class="p-5 sm:p-6">
+            <h3 class="text-xl sm:text-2xl font-bold text-accent mb-2"><?= esc($p['title']) ?></h3>
+            <p class="text-gray-300 mb-4 text-sm sm:text-base leading-relaxed"><?= esc($p['description']) ?></p>
+
+            <div class="flex flex-wrap gap-2">
+              <?php foreach ($techList[$p['id']] as $t): ?>
+                <span class="<?= esc($t['color_class']) ?> px-3 py-1 rounded-full text-xs font-semibold">
+                  <?= esc($t['tech_name']) ?>
+                </span>
+              <?php endforeach; ?>
+            </div>
+          </div>
         </div>
-      <?php endif; ?>
-
+      <?php endforeach; ?>
     <?php endif; ?>
-
   </div>
+
+  <!-- Pagination -->
+  <?php if ($totalPages > 1): ?>
+    <div class="mt-10 flex justify-center gap-2">
+      <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+        <a href="?page=<?= $i ?>"
+           class="px-3 py-1 rounded 
+                  <?= $i == $page ? 'bg-accent text-darkbg' : 'bg-gray-700 text-gray-200' ?>">
+           <?= $i ?>
+        </a>
+      <?php endfor; ?>
+    </div>
+  <?php endif; ?>
 </section>
 
 <?php require_once LAYOUT_FOOT_FILE; ?>
