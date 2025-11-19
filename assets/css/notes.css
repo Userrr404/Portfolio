@@ -1,0 +1,17 @@
+.note-card {
+  opacity: 0;
+  transform: translateY(40px);
+}
+/* Subtle hover scale on mobile-safe range */
+@media (hover: hover) {
+  .note-card:hover {
+    transform: translateY(-6px);
+  }
+}
+/* Typography fluidity */
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  word-break: keep-all;
+}
