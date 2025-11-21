@@ -1,0 +1,13 @@
+{
+    "hero_heading": "Hi, I’m Avinash 👋 from defaultPath",
+    "hero_subheading": "Full Stack Developer | Android Developer | Problem Solver",
+    "hero_description": "I craft high-performance web & mobile applications using PHP, MySQL, JavaScript, and modern tools.",
+    "projects_link": "projects.php",
+    "cv_link": "assets/cv/Yogesh-CV.pdf",
+    "cta_projects": "View Projects",
+    "cta_contact": "Contact Me",
+    "animation_url": "https://assets10.lottiefiles.com/packages/lf20_kyu7xb1v.json",
+    "background_image": "public/assets/images/default-hero-bg.jpg",
+    "is_default": true,
+    "is_active": 1
+}

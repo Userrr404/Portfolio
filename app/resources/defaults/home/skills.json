@@ -1,0 +1,44 @@
+[
+    {
+        "skill_name": "HTML5 from defaultPath",
+        "icon_class": "fa-brands fa-html5",
+        "color_class": "text-orange-500",
+        "is_default": true
+    },
+    {
+        "skill_name": "CSS3 D",
+        "icon_class": "fa-brands fa-css3-alt",
+        "color_class": "text-blue-500",
+        "is_default": true
+    },
+    {
+        "skill_name": "JavaScript",
+        "icon_class": "fa-brands fa-js",
+        "color_class": "text-yellow-400",
+        "is_default": true
+    },
+    {
+        "skill_name": "PHP",
+        "icon_class": "fa-brands fa-php",
+        "color_class": "text-indigo-400",
+        "is_default": true
+    },
+    {
+        "skill_name": "MySQL",
+        "icon_class": "fa-solid fa-database",
+        "color_class": "text-teal-400",
+        "is_default": true
+    },
+    {
+        "skill_name": "Tailwind CSS",
+        "icon_class": "fa-solid fa-wind",
+        "color_class": "text-cyan-400",
+        "is_default": true
+    },
+    {
+        "skill_name": "Git & GitHub",
+        "icon_class": "fa-brands fa-git-alt",
+        "color_class": "text-orange-600",
+        "is_default": true
+    }
+]

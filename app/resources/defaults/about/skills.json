@@ -1,0 +1,27 @@
+[
+  {
+    "skill_name": "from defaultPath PHP",
+    "icon_class": "fab fa-php",
+    "color_class": "text-blue-400"
+  },
+  {
+    "skill_name": "MySQL",
+    "icon_class": "fas fa-database",
+    "color_class": "text-yellow-400"
+  },
+  {
+    "skill_name": "JavaScript",
+    "icon_class": "fab fa-js",
+    "color_class": "text-yellow-300"
+  },
+  {
+    "skill_name": "TailwindCSS",
+    "icon_class": "fab fa-css3-alt",
+    "color_class": "text-sky-400"
+  },
+  {
+    "skill_name": "Android",
+    "icon_class": "fab fa-android",
+    "color_class": "text-green-400"
+  }
+]

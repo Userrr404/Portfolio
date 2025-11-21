@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "title": "from defaultpath Footwear E-Commerce Website",
+    "description": "A full-stack online store built with PHP, MySQL, and TailwindCSS featuring products, cart, checkout, and admin panel.",
+    "image_path": "../assets/images/projects/footwear.png",
+    "project_link": "#",
+    "is_featured": 1,
+    "is_active": 1,
+    "sort_order": 1
+  },
+  {
+    "id": 2,
+    "title": "Personal Portfolio",
+    "description": "A modern responsive portfolio site built using TailwindCSS, animations, caching, and PHP MVC structure.",
+    "image_path": "../assets/images/projects/portfolio.png",
+    "project_link": "#",
+    "is_featured": 1,
+    "is_active": 1,
+    "sort_order": 2
+  },
+  {
+    "id": 3,
+    "title": "Android Expense Tracker",
+    "description": "An Android app to track daily expenses, built using Java, SQLite, and chart visualizations.",
+    "image_path": "../assets/images/projects/expense.png",
+    "project_link": "#",
+    "is_featured": 1,
+    "is_active": 1,
+    "sort_order": 3
+  },
+  {
+    "id": 4,
+    "title": "Online Quiz Platform",
+    "description": "An interactive quiz system where users can take timed quizzes and evaluate their scores instantly.",
+    "image_path": "../assets/images/projects/quiz.png",
+    "project_link": "#",
+    "is_featured": 0,
+    "is_active": 1,
+    "sort_order": 4
+  },
+  {
+    "id": 5,
+    "title": "Weather Forecast Web App",
+    "description": "Displays real-time weather data fetched using OpenWeather API. Built using PHP + JavaScript.",
+    "image_path": "../assets/images/projects/weather.png",
+    "project_link": "#",
+    "is_featured": 0,
+    "is_active": 1,
+    "sort_order": 5
+  },
+  {
+    "id": 6,
+    "title": "Library Management System",
+    "description": "A PHP-MySQL platform for managing books, issuing, returning, and user activity logs.",
+    "image_path": "../assets/images/projects/library.png",
+    "project_link": "#",
+    "is_featured": 0,
+    "is_active": 1,
+    "sort_order": 6
+  }
+]

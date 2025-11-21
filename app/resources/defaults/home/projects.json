@@ -1,0 +1,32 @@
+[
+    {
+        "id": 0,
+        "title": "from defaultPath Portfolio Website",
+        "description": "Dynamic PHP + MySQL website with caching, controllers, models & animations.",
+        "image_path": "assets/img/default-project.jpg",
+        "project_link": "#",
+        "is_featured": 1,
+        "sort_order": 1,
+        "is_default": true
+    },
+    {
+        "id": 0,
+        "title": "D E-Commerce Backend",
+        "description": "Cart, authentication, product management & admin panel.",
+        "image_path": "assets/img/default-project.jpg",
+        "project_link": "#",
+        "is_featured": 1,
+        "sort_order": 2,
+        "is_default": true
+    },
+    {
+        "id": 0,
+        "title": "Analytics Dashboard",
+        "description": "Tailwind + PHP dashboard with chart widgets and API integration.",
+        "image_path": "assets/img/default-project.jpg",
+        "project_link": "#",
+        "is_featured": 1,
+        "sort_order": 3,
+        "is_default": true
+    }
+]

@@ -1,0 +1,35 @@
+{
+  "1": [
+    { "project_id": 1, "tech_name": "from defaultpath PHP", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 1, "tech_name": "MySQL", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 1, "tech_name": "Tailwind", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 1, "tech_name": "JS", "color_class": "bg-accent/20 text-accent" }
+  ],
+  "2": [
+    { "project_id": 2, "tech_name": "HTML", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 2, "tech_name": "Tailwind", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 2, "tech_name": "JS", "color_class": "bg-accent/20 text-accent" }
+  ],
+  "3": [
+    { "project_id": 3, "tech_name": "PHP", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 3, "tech_name": "Java", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 3, "tech_name": "SQLite", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 3, "tech_name": "Android Studio", "color_class": "bg-accent/20 text-accent" }
+  ],
+  "4": [
+    { "project_id": 4, "tech_name": "PHP", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 4, "tech_name": "MySQL", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 4, "tech_name": "JavaScript", "color_class": "bg-accent/20 text-accent" }
+  ],
+  "5": [
+    { "project_id": 5, "tech_name": "HTML", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 5, "tech_name": "CSS", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 5, "tech_name": "JS", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 5, "tech_name": "API", "color_class": "bg-accent/20 text-accent" }
+  ],
+  "6": [
+    { "project_id": 6, "tech_name": "PHP", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 6, "tech_name": "MySQL", "color_class": "bg-accent/20 text-accent" },
+    { "project_id": 6, "tech_name": "Bootstrap", "color_class": "bg-accent/20 text-accent" }
+  ]
+}

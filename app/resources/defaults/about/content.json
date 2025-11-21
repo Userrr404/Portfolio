@@ -1,0 +1,9 @@
+{
+  "greeting_title": "Hi, I'm Yogesh Lilake 👋 from defaultPath",
+  "main_description": "I build modern web and mobile applications with a focus on performance, usability and clean architecture.",
+  "secondary_description": "I enjoy solving problems end-to-end: from design and product thinking to clean, tested code.",
+  "cta_text": "Download CV",
+  "cta_link": "assets/cv/Yogesh-CV.pdf",
+  "profile_image": "assets/images/profile.jpg",
+  "is_active": 1
+}

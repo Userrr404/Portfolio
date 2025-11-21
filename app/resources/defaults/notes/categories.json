@@ -1,0 +1,18 @@
+[
+  {
+    "slug": "ds",
+    "name": "from defaultpath DSA"
+  },
+  {
+    "slug": "web",
+    "name": "Web Development"
+  },
+  {
+    "slug": "system",
+    "name": "System Design"
+  },
+  {
+    "slug": "mindset",
+    "name": "Mindset"
+  }
+]
