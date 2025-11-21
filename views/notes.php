@@ -7,10 +7,10 @@ require_once CORE_PATH . 'App.php';
 // Controller returns all required data with DB → Cache → Defaults
 $data = App::run("NotesController@index");
 
-$notes = $data["notes"];
-$categories = $data["categories"];
-$tags = $data["tags"];
-$pinned_notes = $data["pinned_notes"];
+$notes        = $data["notes"]["data"] ?? [];
+$categories   = $data["categories"]["data"] ?? [];
+$tags         = $data["tags"]["data"] ?? [];
+$pinned_notes = $data["pinned_notes"]["data"] ?? [];
 
 $page_title = "Notes | Yogesh Lilake";
 $custom_css = [NOTES_CSS];
@@ -21,8 +21,32 @@ $extra_js = [
     "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js",
 ];
 
+/* ===================================================
+   Helper Functions (NULL SAFE + HTML SAFE)
+   =================================================== */
+
+function safe($value, string $default = '')
+{
+    if (!isset($value) || $value === '' || $value === false || $value === null) {
+        return $default;
+    }
+
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
+
+function safeStr($value, int $length = 120, string $default = ''): string
+{
+    if (!isset($value) || $value === '' || $value === false || $value === null) {
+        return $default;
+    }
+
+    $value = (string)$value; // Convert to safe string
+    return htmlspecialchars(substr($value, 0, $length), ENT_QUOTES, 'UTF-8');
+}
+
 require_once LAYOUT_HEAD_FILE;
 ?>
+
 
 <!-- HERO -->
 <section class="relative min-h-[60vh] flex flex-col justify-center items-center text-center overflow-hidden px-4 sm:px-6">
@@ -50,14 +74,14 @@ require_once LAYOUT_HEAD_FILE;
         <?php foreach ($pinned_notes as $note): ?>
             <div class="bg-card p-6 rounded-2xl border border-gray-700 hover:shadow-xl transition-all duration-500">
                 <h3 class="text-lg md:text-xl font-semibold text-white mb-2">
-                    <?= htmlspecialchars($note['title']) ?>
+                    <?= safe($note['title']) ?>
                 </h3>
 
                 <p class="text-gray-400 text-sm mb-3">
-                    <?= htmlspecialchars(substr($note['description'], 0, 100)) ?>...
+                    <?= safe(substr((string)($note['description'] ?? ''), 0, 100)) ?>...
                 </p>
 
-                <a href="<?= htmlspecialchars($note['link']) ?>" class="text-accent hover:underline text-sm font-medium">
+                <a href="<?= safe($note['link'] ?? '') ?>" class="text-accent hover:underline text-sm font-medium">
                     Read More →
                 </a>
             </div>
@@ -81,8 +105,8 @@ require_once LAYOUT_HEAD_FILE;
         class="bg-card border border-gray-700 px-4 py-3 rounded-lg focus:ring-2 focus:ring-accent">
       <option value="all">All Categories</option>
       <?php foreach ($categories as $cat): ?>
-        <option value="<?= htmlspecialchars($cat['slug']) ?>">
-            <?= htmlspecialchars($cat['name']) ?>
+        <option value="<?= safe($cat['slug']) ?>">
+            <?= safe($cat['name']) ?>
         </option>
       <?php endforeach; ?>
     </select>
@@ -101,8 +125,8 @@ require_once LAYOUT_HEAD_FILE;
       <?php foreach ($categories as $cat): ?>
         <li>
           <button class="filter-btn text-gray-300 hover:text-accent transition"
-              data-cat="<?= htmlspecialchars($cat['slug']) ?>">
-              <?= htmlspecialchars($cat['name']) ?>
+              data-cat="<?= safe($cat['slug']) ?>">
+              <?= safe($cat['name']) ?>
           </button>
         </li>
       <?php endforeach; ?>
@@ -113,7 +137,7 @@ require_once LAYOUT_HEAD_FILE;
       <div class="flex flex-wrap gap-2">
         <?php foreach ($tags as $tag): ?>
           <span class="bg-gray-700 text-sm px-3 py-1 rounded-full text-gray-200">
-              #<?= htmlspecialchars($tag['name']) ?>
+              #<?= safe($tag['name']) ?>
           </span>
         <?php endforeach; ?>
       </div>
@@ -125,18 +149,18 @@ require_once LAYOUT_HEAD_FILE;
     <?php if (!empty($notes)): ?>
         <?php foreach ($notes as $note): ?>
             <div class="note-card bg-card p-6 rounded-2xl border border-gray-700 hover:shadow-xl transition-all duration-700"
-                 data-cat="<?= htmlspecialchars($note['slug']) ?>">
+                 data-cat="<?= safe($note['slug']) ?>">
 
                 <h3 class="text-xl font-semibold mb-2 text-white">
-                    <?= htmlspecialchars($note['title']) ?>
+                    <?= safe($note['title']) ?>
                 </h3>
 
                 <p class="text-gray-400 text-sm mb-4">
-                    <?= htmlspecialchars(substr($note['description'], 0, 120)) ?>...
+                    <?= safe(substr((string)($note['description'] ?? ''), 0, 100)) ?>...
                 </p>
 
                 <div class="flex justify-between items-center">
-                  <a href="<?= htmlspecialchars($note['link']) ?>" class="text-accent hover:underline text-sm font-medium">
+                  <a href="<?= safe($note['link']) ?>" class="text-accent hover:underline text-sm font-medium">
                       Read More →
                   </a>
 
