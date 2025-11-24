@@ -1,0 +1,44 @@
+input,
+textarea {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #f1f5f9;
+  transition: all 0.3s ease;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+#toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #10b981;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.4s ease;
+  z-index: 99999;
+  font-weight: 500;
+}
+#toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Responsive spacing optimization */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.9rem;
+    line-height: 2.4rem;
+  }
+  .form-section {
+    padding: 1.5rem !important;
+  }
+}
