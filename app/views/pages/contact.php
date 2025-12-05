@@ -10,8 +10,8 @@ $toastSection   = $data['toast']['data']   ?? [];
 $page_title = "Contact | Yogesh Lilake";
 $custom_css = [CONTACT_CSS];
 $custom_js  = [CONTACT_JS];
-$extra_css  = ["https://unpkg.com/aos@2.3.4/dist/aos.css"];
-$extra_js   = ["https://unpkg.com/aos@2.3.4/dist/aos.js"];
+$extra_css  = [AOS_CSS];
+$extra_js   = [AOS_JS];
 
 require_once LAYOUT_HEAD_FILE;
 ?>

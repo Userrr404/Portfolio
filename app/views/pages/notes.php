@@ -5,13 +5,13 @@ $categories   = $data["categories"]["data"] ?? [];
 $tags         = $data["tags"]["data"] ?? [];
 $pinned_notes = $data["pinned_notes"]["data"] ?? [];
 
-$page_title = "Notes | Yogesh Lilake";
+$page_title = "Notes | " . SITE_TITLE;
 $custom_css = [NOTES_CSS];
 $custom_js  = [NOTES_JS];
 
 $extra_js = [
-    "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js",
-    "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js",
+    GSAP_CDN,
+    GSAP_SCROLLTRIGGER_CDN,
 ];
 
 /* ===================================================

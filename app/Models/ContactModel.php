@@ -3,13 +3,12 @@
 class ContactModel {
 
     private string $cacheKey = "contact";
-    private string $defaultHomeJson = ROOT_PATH . "app/resources/defaults/home/contact.json";
+    private string $defaultHomeJson = HOME_CONTACT_DEFAULT_FILE;
     private string $defaultPath;
 
     public function __construct() {
-        require_once ROOT_PATH . "app/Services/CacheService.php";
+        require_once CACHESERVICE_FILE;
 
-        $this->defaultPath = ROOT_PATH . "app/resources/defaults/contact/";
     }
 
     public function get()
@@ -76,7 +75,7 @@ class ContactModel {
     /* --------------------------
      * Unified loader helper
      * -------------------------- */
-    private function loadUnified(string $cacheKey, string $table, string $jsonFile, callable $fallbackFn, bool $single = false)
+    private function loadUnified(string $cacheKey, string $table, string $jsonPathConst, callable $fallbackFn, bool $single = false)
     {
         // A. Try cache (section-level)
         if ($cache = CacheService::load($cacheKey)) {
@@ -106,9 +105,10 @@ class ContactModel {
         }
 
         // C. Try JSON defaults (wrapped)
-        $path = $this->defaultPath . $jsonFile;
-        if (file_exists($path)) {
-            $json = json_decode(file_get_contents($path), true);
+        $jsonFile = constant($jsonPathConst);
+
+        if (file_exists($jsonFile)) {
+            $json = json_decode(file_get_contents($jsonFile), true);
             if (!empty($json) && is_array($json)) {
                 return [
                     "is_default_json" => true,
@@ -128,31 +128,31 @@ class ContactModel {
     // Hero is a single-record section
     public function getHero()
     {
-        return $this->loadUnified("contact_hero", "contact_page_settings", "contact_hero1.json", [$this, 'defaultHero'], true);
+        return $this->loadUnified("contact_hero", "contact_page_settings", 'CONTACT_HERO_DEFAULT_FILE', [$this, 'defaultHero'], true);
     }
 
     // Info is list of contact_info rows
     public function getInfo()
     {
-        return $this->loadUnified("contact_info", "contact_info", "contact_info1.json", [$this, 'defaultInfo']);
+        return $this->loadUnified("contact_info", "contact_info", 'CONTACT_INFO_DEFAULT_FILE', [$this, 'defaultInfo']);
     }
 
     // Socials is list of contact_social_links rows
     public function getSocials()
     {
-        return $this->loadUnified("contact_socials", "contact_social_links", "contact_social_links1.json", [$this, 'defaultSocials']);
+        return $this->loadUnified("contact_socials", "contact_social_links", 'CONTACT_SOCIALS_DEFAULT_FILE', [$this, 'defaultSocials']);
     }
 
     // Map is single-record (could be in settings)
     public function getMap()
     {
-        return $this->loadUnified("contact_map", "contact_page_settings", "contact_map1.json", [$this, 'defaultMap'], true);
+        return $this->loadUnified("contact_map", "contact_page_settings", 'CONTACT_MAP_DEFAULT_FILE', [$this, 'defaultMap'], true);
     }
 
     // Toast / small strings - single-record
     public function getToast()
     {
-        return $this->loadUnified("contact_toast", "contact_page_settings", "contact_toast1.json", [$this, 'defaultToast'], true);
+        return $this->loadUnified("contact_toast", "contact_page_settings", 'CONTACT_TOAST_DEFAULT_FILE', [$this, 'defaultToast'], true);
     }
 
     /* --------------------------

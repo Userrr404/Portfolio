@@ -3,7 +3,7 @@
 class SkillModel {
 
     private string $cacheKey = "skills";
-    private string $defaultJson = ROOT_PATH . "app/resources/defaults/home/skills.json";
+    private string $defaultJson = HOME_SKILLS_DEFAULT_FILE;
 
     public function all()
     {

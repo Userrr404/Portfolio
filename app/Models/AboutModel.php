@@ -22,10 +22,8 @@ class AboutModel {
     // private int $defaultTTL = 3600; // seconds for section caches (tunable)
 
     public function __construct() {
-        require_once ROOT_PATH . "app/Services/CacheService.php";
+        require_once CACHESERVICE_FILE;
 
-        // Store folder containing all default JSON files
-        $this->defaultPath = ROOT_PATH . "app/resources/defaults/about/";
     }
 
     /**
@@ -59,7 +57,7 @@ class AboutModel {
         /** ----------------------------------------------------
         * C. TRY DEFAULT JSON FILE
         * ----------------------------------------------------*/
-        $jsonFile = ROOT_PATH . "app/resources/defaults/home/about.json";
+        $jsonFile = HOME_ABOUT_DEFAULT_FILE;
 
         if (file_exists($jsonFile)) {
             $json = json_decode(file_get_contents($jsonFile), true);
@@ -92,7 +90,7 @@ class AboutModel {
      * @param callable  $fallbackFn  Function returning default PHP data
      * @param bool      $single      If true → LIMIT 1, else → fetchAll()
     */
-    private function loadUnified(string $cacheKey, string $table, string $jsonFile, callable $fallbackFn, bool $single = false){
+    private function loadUnified(string $cacheKey, string $table, string $jsonPathConst, callable $fallbackFn, bool $single = false){
         
         /** ----------------------------------------------------
          * A. Check cache
@@ -132,10 +130,10 @@ class AboutModel {
         /** ----------------------------------------------------
          * C. Try loading JSON defaults
          * ---------------------------------------------------- */
-        $path = $this->defaultPath . $jsonFile;
+        $jsonFile = constant($jsonPathConst);
 
-        if (file_exists($path)) {
-            $json = json_decode(file_get_contents($path), true);
+        if (file_exists($jsonFile)) {
+            $json = json_decode(file_get_contents($jsonFile), true);
 
             if (!empty($json)) {
                 // ALWAYS wrap JSON defaults for controller consistency
@@ -159,32 +157,32 @@ class AboutModel {
 
     public function getHero()
     {
-        return $this->loadUnified("about_hero",       "about_hero",       "hero.json",       [$this, 'defaultHero'], true);
+        return $this->loadUnified("about_hero",       "about_hero",       'ABOUT_HERO_DEFAULT_FILE',       [$this, 'defaultHero'], true);
     }
 
     public function getContent()
     {
-        return $this->loadUnified("about_content",    "about_content",    "content.json",    [$this, 'defaultContent'], true);
+        return $this->loadUnified("about_content",    "about_content",    'ABOUT_CONTENT_DEFAULT_FILE',    [$this, 'defaultContent'], true);
     }
 
     public function getSkills(): array
     {
-        return $this->loadUnified("about_skills",     "about_skills",     "skills.json",     [$this, 'defaultSkills']);
+        return $this->loadUnified("about_skills",     "about_skills",     'ABOUT_SKILLS_DEFAULT_FILE',     [$this, 'defaultSkills']);
     }
 
     public function getExperience(): array
     {
-        return $this->loadUnified("about_experience", "about_experience", "experience.json", [$this, 'defaultExperience']);
+        return $this->loadUnified("about_experience", "about_experience", 'ABOUT_EXPERIENCE_DEFAULT_FILE', [$this, 'defaultExperience']);
     }
 
     public function getEducation(): array
     {
-        return $this->loadUnified("about_education",  "about_education",  "education.json",  [$this, 'defaultEducation']);
+        return $this->loadUnified("about_education",  "about_education",  'ABOUT_EDUCATION_DEFAULT_FILE',  [$this, 'defaultEducation']);
     }
 
     public function getStats(): array
     {
-        return $this->loadUnified("about_stats",      "about_stats",      "stats.json",      [$this, 'defaultStats']);
+        return $this->loadUnified("about_stats",      "about_stats",      'ABOUT_STATS_DEFAULT_FILE',      [$this, 'defaultStats']);
     }
 
     /* ============================================================

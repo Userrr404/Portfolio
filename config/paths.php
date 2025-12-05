@@ -16,6 +16,12 @@ define('ROOT_PATH', str_replace('\\', '/', realpath(__DIR__ . '/../')) . '/');
 define('PUBLIC_PATH', ROOT_PATH . 'public/');
 
 /* ---------------------------------------------
+   BOOT FILE (GLOBAL PAGE INITIALIZER)
+---------------------------------------------- */
+define('BOOTSTRAP_FILE', PUBLIC_PATH . 'bootstrap.php');
+
+
+/* ---------------------------------------------
    3. APP PATHS
 ---------------------------------------------- */
 define('APP_PATH', ROOT_PATH . 'app/');
@@ -218,6 +224,8 @@ define('AOS_CSS', 'https://unpkg.com/aos@2.3.4/dist/aos.css');
 define('AOS_JS', 'https://unpkg.com/aos@2.3.4/dist/aos.js');
 define('FONT_AWESOME', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
 define('LOTTIE_PLAYER', 'https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js');
+define('GSAP_CDN', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js');
+define('GSAP_SCROLLTRIGGER_CDN', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js');
 
 // ====================================================
 // PAGE ROUTES

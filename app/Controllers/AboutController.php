@@ -13,8 +13,8 @@ class AboutController extends Controller
 
     public function __construct()
     {
-        require_once ROOT_PATH . "app/Models/AboutModel.php";
-        require_once ROOT_PATH . "app/Services/CacheService.php";
+        require_once ABOUT_MODEL_FILE;
+        require_once CACHESERVICE_FILE;
 
         $this->about = new AboutModel();
     }

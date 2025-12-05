@@ -2,7 +2,6 @@
 
 class NoteModel
 {
-    private string $defaultPath;
 
     private string $cacheKeyNotes      = "notes_list";
     private string $cacheKeyCategories = "note_categories";
@@ -11,8 +10,7 @@ class NoteModel
 
     public function __construct()
     {
-        require_once ROOT_PATH . "app/Services/CacheService.php";
-        $this->defaultPath = ROOT_PATH . "app/resources/defaults/notes/";
+        require_once CACHESERVICE_FILE;
     }
 
 
@@ -52,13 +50,12 @@ class NoteModel
         }
 
         // C. Try default JSON
-        $jsonPath = $this->defaultPath . "notes1.json";
-        if (file_exists($jsonPath)) {
-            $json = json_decode(file_get_contents($jsonPath), true);
+        if (file_exists(NOTES_DEFAULT_FILE)) {
+            $json = json_decode(file_get_contents(NOTES_DEFAULT_FILE), true);
             if (!empty($json)) return $json;
         }
 
-        // D. Hard-coded fallback
+        // D. Hard fallback
         return $this->defaultNotes();
     }
 
@@ -68,7 +65,7 @@ class NoteModel
         return [
             [
                 "is_default"   => true,
-                "title"        => "D Welcome Note",
+                "title"        => "Welcome Note",
                 "description"  => "Your notes page is ready! Add notes from the admin.",
                 "slug"         => "general",
                 "link"         => "#"
@@ -103,10 +100,9 @@ class NoteModel
             app_log("NoteModel@getCategories error: " . $e->getMessage(), "error");
         }
 
-        // C. Try default JSON
-        $jsonPath = $this->defaultPath . "categories1.json";
-        if (file_exists($jsonPath)) {
-            $json = json_decode(file_get_contents($jsonPath), true);
+        // C. JSON defaults
+        if (file_exists(NOTES_CATEGORIES_DEFAULT_FILE)) {
+            $json = json_decode(file_get_contents(NOTES_CATEGORIES_DEFAULT_FILE), true);
             if (!empty($json)) return $json;
         }
 
@@ -154,9 +150,8 @@ class NoteModel
         }
 
         // C. Try default JSON
-        $jsonPath = $this->defaultPath . "tags1.json";
-        if (file_exists($jsonPath)) {
-            $json = json_decode(file_get_contents($jsonPath), true);
+        if (file_exists(NOTES_TAGS_DEFAULT_FILE)) {
+            $json = json_decode(file_get_contents(NOTES_TAGS_DEFAULT_FILE), true);
             if (!empty($json)) return $json;
         }
 
@@ -168,7 +163,7 @@ class NoteModel
     private function defaultTags(): array
     {
         return [
-            ["is_default" => true, "name" => "D general"]
+            ["is_default" => true, "name" => "general"]
         ];
     }
 
@@ -208,9 +203,8 @@ class NoteModel
         }
 
         // C. Try default JSON
-        $jsonPath = $this->defaultPath . "pinned1.json";
-        if (file_exists($jsonPath)) {
-            $json = json_decode(file_get_contents($jsonPath), true);
+        if (file_exists(NOTES_PINNED_DEFAULT_FILE)) {
+            $json = json_decode(file_get_contents(NOTES_PINNED_DEFAULT_FILE), true);
             if (!empty($json)) return $json;
         }
 

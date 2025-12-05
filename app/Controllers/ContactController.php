@@ -10,8 +10,8 @@ class ContactController extends Controller
 
     public function __construct()
     {
-        require_once ROOT_PATH . "app/Models/ContactModel.php";
-        require_once ROOT_PATH . "app/Services/CacheService.php";
+        require_once CONTACT_MODEL_FILE;
+        require_once CACHESERVICE_FILE;
 
         $this->contact = new ContactModel();
     }

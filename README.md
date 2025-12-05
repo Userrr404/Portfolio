@@ -256,6 +256,7 @@ Portfolio/
 │     │
 │     ├── downloads/                # Resume
 │     │       └── .pdf
+│     ├── bootstrap.php # GLOBAL BOOTSTRAP — loads everything required files for each page
 │     ├── index.php # Homepage
 │     ├── about.php # About section
 │     ├── projects.php # Portfolio projects

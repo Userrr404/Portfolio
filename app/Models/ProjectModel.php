@@ -3,13 +3,10 @@
 class ProjectModel {
     // private int $defaultTTL = 3600; // 1 hour cache
 
-    /** Path to default JSON files */
-    private string $defaultPath;
-
     public function __construct()
     {
-        require_once ROOT_PATH . "app/Services/CacheService.php";
-        $this->defaultPath = ROOT_PATH . "app/resources/defaults/projects/"; // ensure these files exist
+        require_once CACHESERVICE_FILE;
+        
     }
 
     /* ============================================================
@@ -40,7 +37,7 @@ class ProjectModel {
         /** ----------------------------------------------------
         * C. TRY DEFAULT JSON FILE
         * ----------------------------------------------------*/
-        $jsonFile = ROOT_PATH . "app/resources/defaults/home/projects.json";
+        $jsonFile = HOME_PROJECTS_DEFAULT_FILE;
 
         if (file_exists($jsonFile)) {
             $json = json_decode(file_get_contents($jsonFile), true);
@@ -182,7 +179,7 @@ class ProjectModel {
         /* ----------------------------
          * C. Try default JSON file (paginated)
          * ---------------------------- */
-        $jsonPath = $this->defaultPath . "projects1.json";
+        $jsonPath = PROJECTS_DEFAULT_FILE;
         if (file_exists($jsonPath)) {
             $all = json_decode(file_get_contents($jsonPath), true);
             if (!empty($all) && is_array($all)) {
@@ -254,7 +251,7 @@ class ProjectModel {
         }
 
         /* C. default JSON */
-        $jsonPath = $this->defaultPath . "tech_list1.json";
+        $jsonPath = PROJECTS_TECHLIST_DEFAULT_FILE;
         if (file_exists($jsonPath)) {
             $json = json_decode(file_get_contents($jsonPath), true);
             if (!empty($json) && is_array($json)) {

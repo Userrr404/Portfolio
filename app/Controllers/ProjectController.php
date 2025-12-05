@@ -9,8 +9,8 @@ class ProjectController extends Controller
 
     public function __construct()
     {
-        require_once ROOT_PATH . "app/Models/ProjectModel.php";
-        require_once ROOT_PATH . "app/Services/CacheService.php";
+        require_once PROJECT_MODEL_FILE;
+        require_once CACHESERVICE_FILE;
 
         $this->projects = new ProjectModel();
     }
