@@ -5,14 +5,18 @@ $heroSection    = $data['hero']['data']    ?? [];
 $infoSection    = $data['info']['data']    ?? [];
 $socialsSection = $data['socials']['data'] ?? [];
 $mapSection     = $data['map']['data']     ?? [];
-// $toastSection   = $data['toast']['data']   ?? [];
-$toastMessage = null;  // JS will handle toast from URL params
+$toastMessage = null;  // JS will handle toast from API responses
 
 $page_title = "Contact | Yogesh Lilake";
 $custom_css = [CONTACT_CSS];
 $custom_js  = [CONTACT_JS];
 $extra_css  = [AOS_CSS];
+
+// If RECAPTCHA_SITE_KEY is set, include the recaptcha script
 $extra_js   = [AOS_JS];
+if (defined('RECAPTCHA_SITE_KEY') && RECAPTCHA_SITE_KEY) {
+    $extra_js[] = "https://www.google.com/recaptcha/api.js?render=" . RECAPTCHA_SITE_KEY;
+}
 
 require_once LAYOUT_HEAD_FILE;
 ?>
@@ -48,16 +52,15 @@ require_once LAYOUT_HEAD_FILE;
     <div class="bg-darkbg p-6 sm:p-8 rounded-3xl shadow-lg border border-gray-700" data-aos="fade-right">
       <h2 class="text-2xl sm:text-3xl font-semibold mb-6 text-accent">Send a Message</h2>
 
-      <!-- <form id="contact-form" method="POST" action="send_message.php" class="space-y-5"> -->
-      <form id="contact-form" class="space-y-5">
+      <form id="contact-form" class="space-y-5" novalidate>
         <div>
           <label class="block text-sm mb-2">Your Name</label>
-          <input type="text" name="name" required class="w-full px-4 py-3 rounded-lg">
+          <input type="text" name="name" required class="w-full px-4 py-3 rounded-lg" autocomplete="name">
         </div>
 
         <div>
           <label class="block text-sm mb-2">Email Address</label>
-          <input type="email" name="email" required class="w-full px-4 py-3 rounded-lg">
+          <input type="email" name="email" required class="w-full px-4 py-3 rounded-lg" autocomplete="email">
         </div>
 
         <div>
@@ -65,15 +68,21 @@ require_once LAYOUT_HEAD_FILE;
           <textarea name="message" rows="5" required class="w-full px-4 py-3 rounded-lg resize-none"></textarea>
         </div>
 
+        <!-- Honeypot field (hidden to users, visible to bots) -->
+        <div style="display:none !important; visibility:hidden;">
+          <label>Leave this field empty</label>
+          <input type="text" name="hp_name" value="" autocomplete="off">
+        </div>
+
+        <!-- reCAPTCHA token holder (filled by JS if available) -->
+        <input type="hidden" name="recaptcha_token" id="recaptcha_token" value="">
+
         <button id="sendBtn" type="submit" class="w-full bg-accent hover:bg-red-500 text-white font-semibold py-3 rounded-lg transition duration-300 hover:scale-105">
           <span class="btn-text">Send Message</span>
           <span class="btn-loading hidden">Sending...</span>
           <i class="fa-solid fa-paper-plane ml-2"></i>
         </button>
       </form>
-
-      <div id="toast"></div>
-
     </div>
 
     <!-- Right: Contact Info -->
@@ -119,12 +128,6 @@ require_once LAYOUT_HEAD_FILE;
 </section>
 
 <!-- Toast -->
-<?php
-// toast may be structured (array) or a simple string depending on DB/JSON fallback
-// $toastMessage = is_array($toastSection) ? ($toastSection['message'] ?? ($toastSection['toast'] ?? '')) : (string)$toastSection;
-?>
-
-
-<!-- <div id="toast"><?= htmlspecialchars($toastMessage ?: "Thank you! Your message has been sent successfully 🎉") ?></div> -->
+<div id="toast"></div>
 
 <?php require_once LAYOUT_FOOT_FILE; ?>

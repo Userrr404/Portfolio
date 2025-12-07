@@ -1,10 +1,10 @@
 <?php
 /**
- * GLOBAL <head> + auto header loader
+ * GLOBAL <head> + dynamic asset injection
  */
 
 require_once dirname(__DIR__, 3) . '/config/paths.php';
-require_once CONFIG_PATH . 'config.php';
+require_once CONFIG_FILE;
 
 // Page dynamic values
 $page_title = $page_title ?? SITE_TITLE;
@@ -50,6 +50,15 @@ $extra_js   = $extra_js ?? [];
     <?php foreach ($extra_js as $js): ?>
         <script src="<?= htmlspecialchars($js) ?>"></script>
     <?php endforeach; ?>
+
+    <!-- reCAPTCHA v3 Script (only if site key exists) -->
+    <?php if (RECAPTCHA_SITE_KEY): ?>
+        <script src="https://www.google.com/recaptcha/api.js?render=<?= RECAPTCHA_SITE_KEY ?>"></script>
+        <script>
+            const RECAPTCHA_SITE_KEY = "<?= RECAPTCHA_SITE_KEY ?>";
+        </script>
+    <?php endif; ?>
+
 </head>
 
 <body class="bg-darkbg text-color font-sans scroll-smooth min-h-screen flex flex-col">
