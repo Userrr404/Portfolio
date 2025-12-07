@@ -1,0 +1,19 @@
+{
+  "name": "yogesh/portfolio",
+  "description": "Personal Portfolio Website (PHP, TailwindCSS, MVC)",
+  "type": "project",
+  "require": {
+    "phpmailer/phpmailer": "^6.8"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/"
+    },
+    "files": [
+      "config/config.php",
+      "config/paths.php"
+    ]
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

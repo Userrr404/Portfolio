@@ -5,6 +5,9 @@
  * Works on localhost + InfinityFree perfectly.
  */
 
+if (defined('PATHS_ALREADY_LOADED')) return;
+define('PATHS_ALREADY_LOADED', true);
+
 /* ---------------------------------------------
    1. ROOT PATH (ABSOLUTE SERVER FILESYSTEM PATH)
 ---------------------------------------------- */

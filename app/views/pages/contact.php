@@ -5,7 +5,8 @@ $heroSection    = $data['hero']['data']    ?? [];
 $infoSection    = $data['info']['data']    ?? [];
 $socialsSection = $data['socials']['data'] ?? [];
 $mapSection     = $data['map']['data']     ?? [];
-$toastSection   = $data['toast']['data']   ?? [];
+// $toastSection   = $data['toast']['data']   ?? [];
+$toastMessage = null;  // JS will handle toast from URL params
 
 $page_title = "Contact | Yogesh Lilake";
 $custom_css = [CONTACT_CSS];
@@ -47,7 +48,8 @@ require_once LAYOUT_HEAD_FILE;
     <div class="bg-darkbg p-6 sm:p-8 rounded-3xl shadow-lg border border-gray-700" data-aos="fade-right">
       <h2 class="text-2xl sm:text-3xl font-semibold mb-6 text-accent">Send a Message</h2>
 
-      <form id="contact-form" method="POST" action="send_message.php" class="space-y-5">
+      <!-- <form id="contact-form" method="POST" action="send_message.php" class="space-y-5"> -->
+      <form id="contact-form" class="space-y-5">
         <div>
           <label class="block text-sm mb-2">Your Name</label>
           <input type="text" name="name" required class="w-full px-4 py-3 rounded-lg">
@@ -63,10 +65,15 @@ require_once LAYOUT_HEAD_FILE;
           <textarea name="message" rows="5" required class="w-full px-4 py-3 rounded-lg resize-none"></textarea>
         </div>
 
-        <button type="submit" class="w-full bg-accent hover:bg-red-500 text-white font-semibold py-3 rounded-lg transition duration-300 hover:scale-105">
-          Send Message <i class="fa-solid fa-paper-plane ml-2"></i>
+        <button id="sendBtn" type="submit" class="w-full bg-accent hover:bg-red-500 text-white font-semibold py-3 rounded-lg transition duration-300 hover:scale-105">
+          <span class="btn-text">Send Message</span>
+          <span class="btn-loading hidden">Sending...</span>
+          <i class="fa-solid fa-paper-plane ml-2"></i>
         </button>
       </form>
+
+      <div id="toast"></div>
+
     </div>
 
     <!-- Right: Contact Info -->
@@ -114,8 +121,10 @@ require_once LAYOUT_HEAD_FILE;
 <!-- Toast -->
 <?php
 // toast may be structured (array) or a simple string depending on DB/JSON fallback
-$toastMessage = is_array($toastSection) ? ($toastSection['message'] ?? ($toastSection['toast'] ?? '')) : (string)$toastSection;
+// $toastMessage = is_array($toastSection) ? ($toastSection['message'] ?? ($toastSection['toast'] ?? '')) : (string)$toastSection;
 ?>
-<div id="toast"><?= htmlspecialchars($toastMessage ?: "Thank you! Your message has been sent successfully 🎉") ?></div>
+
+
+<!-- <div id="toast"><?= htmlspecialchars($toastMessage ?: "Thank you! Your message has been sent successfully 🎉") ?></div> -->
 
 <?php require_once LAYOUT_FOOT_FILE; ?>

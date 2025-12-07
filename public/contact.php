@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../vendor/autoload.php';  // REQUIRED FOR PHPMailer
 require_once __DIR__ . '/../config/paths.php';
 require_once BOOTSTRAP_FILE;
 
