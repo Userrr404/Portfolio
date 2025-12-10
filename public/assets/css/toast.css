@@ -1,0 +1,30 @@
+/* Toast Notification Styles */
+#toastBox {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 999999;
+}
+.toast {
+  background: #1f2937;
+  color: white;
+  padding: 14px 20px;
+  margin-top: 10px;
+  border-radius: 8px;
+  min-width: 240px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transform: translateX(120%);
+  transition: all 0.4s ease;
+  font-size: 15px;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+.toast.success {
+  background: #10b981;
+}
+.toast.error {
+  background: #ef4444;
+}

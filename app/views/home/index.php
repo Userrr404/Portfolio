@@ -57,10 +57,10 @@ require_once LAYOUT_HEAD_FILE;
             <?= field($home, 'cta_primary_text') ?>
         </a>
 
-        <a href="<?= DOWNLOAD_CV_URL ?>"
+        <button onclick="ajaxDownload('<?= DOWNLOAD_CV_URL ?>', 'Yogesh_Lilake_Resume.pdf')"
             class="btn border border-accent text-accent px-6 py-3 rounded-full font-semibold hover:bg-accent hover:text-darkbg transition">
             <?= field($home, 'cta_secondary_text') ?>
-        </a>
+        </button>
     </div>
 </section>
 

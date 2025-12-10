@@ -28,6 +28,9 @@ $extra_js   = $extra_js ?? [];
     <link rel="stylesheet" href="<?= GLOBAL_CSS ?>">
     <link rel="stylesheet" href="<?= ANIMATIONS_CSS ?>">
 
+    <!-- TOAST GLOBAL CSS -->
+    <link rel="stylesheet" href="<?= TOAST_CSS ?>">
+
     <!-- Page-level CSS -->
     <?php foreach ($custom_css as $css): ?>
         <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>">
@@ -62,6 +65,10 @@ $extra_js   = $extra_js ?? [];
 </head>
 
 <body class="bg-darkbg text-color font-sans scroll-smooth min-h-screen flex flex-col">
+
+    <!-- TOAST BOX CONTAINER -->
+    <div id="toastBox"></div>
+
     <div id="scroll-progress"></div>
 
     <!-- AUTO HEADER -->

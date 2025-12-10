@@ -34,3 +34,34 @@ function safe_query($sql)
         return false;
     }
 }
+
+function get_user_ip() {
+    return $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
+}
+
+function get_user_agent() {
+    return $_SERVER['HTTP_USER_AGENT'] ?? 'UNKNOWN';
+}
+
+function get_device_type() {
+    $ua = get_user_agent();
+    if (preg_match('/mobile/i', $ua)) return "Mobile";
+    if (preg_match('/tablet/i', $ua)) return "Tablet";
+    return "Desktop";
+}
+
+function get_browser_name() {
+    $ua = get_user_agent();
+
+    if (strpos($ua, 'Chrome') !== false) return 'Chrome';
+    if (strpos($ua, 'Firefox') !== false) return 'Firefox';
+    if (strpos($ua, 'Safari') !== false) return 'Safari';
+    if (strpos($ua, 'Edge') !== false) return 'Edge';
+
+    return 'Unknown';
+}
+
+function get_country_from_ip($ip) {
+    return ($ip === '127.0.0.1' || $ip === '::1') ? "Localhost" : "Unknown";
+}
+

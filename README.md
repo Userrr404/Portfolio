@@ -268,7 +268,7 @@ Portfolio/
 │    |    ├── MailService.php # Email handler (contact form)`)
 │    │    ├── HeaderData.php  # Dynamic header data provider
 │    │    └── FooterData.php  # Dynamic footer data provider
-│    │    └── CVService.php  # Complete isolation from Downloadcontrollers
+│    │    └── CVService.php  # Complete isolation from Downloadcontrollers with rateLimit
 │    ├── Core/ # Core contains the foundation of your backend system.`)
 │    │    ├── App.php  # Enterprise Router for your MVC system
 │    │    ├── Controller.php
@@ -349,6 +349,7 @@ Portfolio/
 │     │      │    ├── header.css
 │     │      │    ├── index.css
 │     │      │    ├── notes.css
+│     │      │    ├── toast.css
 │     │      │
 │     │      ├── js/                         # All dynamic client-side JS logic`)
 │     │      │   ├── about.js
@@ -360,6 +361,7 @@ Portfolio/
 │     │      │   ├── scroll-progress.js
 │     │      │   ├── tailwind-config-global.js
 │     │      │   ├── tailwind-config.js
+│     │      │   ├── toast.js
 │     │      │
 │     │      ├── projects/                   # All projects images
 │     │      └── images/                     # All website images, icons, thumbnails`)

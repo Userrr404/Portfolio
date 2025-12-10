@@ -237,10 +237,12 @@ define('GSAP_SCROLLTRIGGER_CDN', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.
 // Global asset paths
 define('GLOBAL_CSS', CSS_URL . 'global.css');
 define('ANIMATIONS_CSS', CSS_URL . 'animations.css');
+define('TOAST_CSS', CSS_URL . 'toast.css');
 
 // Tailwind config paths
 define('TAILWIND_CONFIG_JS', JS_URL . 'tailwind-config.js');
 define('TAILWIND_CONFIG_GLOBAL', JS_URL . 'tailwind-config-global.js');
+define('TOAST_JS', JS_URL . 'toast.js');
 
 // Page-specific asset paths
 // CSS paths
