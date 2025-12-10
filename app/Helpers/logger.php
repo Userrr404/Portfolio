@@ -18,16 +18,18 @@ if(!function_exists('app_log')) {
  */
 function app_log(string $message, string $level = 'info', array $context = []): void
 {
-    $logDir = dirname(APP_LOG_FILE);
+    $logFile = $context['file'] ?? APP_LOG_FILE;  // default=app.log
+
+    $logDir = dirname($logFile);
 
     // Create directory if missing
     if (!is_dir($logDir)) {
         mkdir($logDir, 0755, true);
     }
 
-    // Rotate log if larger than 5MB
-    if (file_exists(APP_LOG_FILE) && filesize(APP_LOG_FILE) > 5 * 1024 * 1024) {
-        rename(APP_LOG_FILE, APP_LOG_FILE . '.' . date('Y-m-d_H-i-s') . '.bak');
+    // Rotate log if > 5MB
+    if (file_exists($logFile) && filesize($logFile) > 5 * 1024 * 1024) {
+        rename($logFile, $logFile . '.' . date('Y-m-d_H-i-s') . '.bak');
     }
 
     $entry = [
@@ -37,20 +39,19 @@ function app_log(string $message, string $level = 'info', array $context = []): 
         'context'   => $context,
         'ip'        => $_SERVER['REMOTE_ADDR'] ?? 'CLI',
         'url'       => $_SERVER['REQUEST_URI'] ?? null,
-        'user_agent'=> $_SERVER['HTTP_USER_AGENT'] ?? null
+        'agent'     => $_SERVER['HTTP_USER_AGENT'] ?? null
     ];
 
-    // Convert to JSON log entry
-    $logLine = json_encode($entry) . PHP_EOL;
+    $line = json_encode($entry) . PHP_EOL;
 
-    // Write atomically with file lock
-    $fp = fopen(APP_LOG_FILE, 'a');
+    $fp = fopen($logFile, 'a');
     if ($fp) {
         flock($fp, LOCK_EX);
-        fwrite($fp, $logLine);
+        fwrite($fp, $line);
         flock($fp, LOCK_UN);
         fclose($fp);
     }
 }
+
 }
 ?>

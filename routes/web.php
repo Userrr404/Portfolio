@@ -9,4 +9,4 @@ $router->get('/contact', 'ContactController@contact');
 // API-like routs
 $router->post('/contact/send', 'ContactController@sendMessage');
 
-$router->get('/downloadcv', 'HomeController@downloadCV');
+$router->get('/downloadcv', 'DownloadController@cvdownload');

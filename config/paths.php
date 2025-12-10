@@ -193,6 +193,7 @@ define('JS_URL', ASSETS_URL . 'js/');
 define('IMG_URL', ASSETS_URL . 'images/');
 define('PROJECT_URL', ASSETS_URL . 'projects/');
 
+define('DOWNLOAD_CV_URL', BASE_URL . 'downloadcv');
 define('DOWNLOADS_PATH', BASE_URL . 'downloads');
 define('RESUME_URL', DOWNLOADS_PATH . 'Yogesh_Lilake_Resume.pdf');
 

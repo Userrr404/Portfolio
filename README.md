@@ -117,7 +117,6 @@ The system includes:
 - Sanitized output using helpers
 - Secure mail system
 - This project now implements **enterprise-grade contact form security**, including:
-<<<<<<< HEAD
 
   ### ✔ 1. Honeypot Bot Protection
 
@@ -125,12 +124,6 @@ The system includes:
 
   ### ✔ 2. IP-Based Rate Limiting
 
-=======
-    ### ✔ 1. Honeypot Bot Protection  
-      - Invisible field `hp_name` detects bots automatically.
-
-    ### ✔ 2. IP-Based Rate Limiting  
->>>>>>> 5148c5d7999efe2e6f4ba2ccd574a3532a969a5b
       - Protects your email inbox from abuse:
 
           | Window | Limit |
@@ -140,12 +133,8 @@ The system includes:
 
       - Implemented inside `send_message.php` using SQL window checks.
 
-<<<<<<< HEAD
   ### ✔ 3. Email Delivery Audit Logging
 
-=======
-    ### ✔ 3. Email Delivery Audit Logging  
->>>>>>> 5148c5d7999efe2e6f4ba2ccd574a3532a969a5b
       - Every submission is stored safely in DB before attempting to send email.
 
         | Column | Meaning |
@@ -156,7 +145,6 @@ The system includes:
 
       - This guarantees **no message is ever lost**, even if your email provider fails.
 
-<<<<<<< HEAD
   ### ✔ 4. PHPMailer Enterprise Pipeline
 
       - Modern PHPMailer integration with:
@@ -176,25 +164,6 @@ The system includes:
         - AJAX submission
         - graceful fallback
         - improved error handling
-=======
-    ### ✔ 4. PHPMailer Enterprise Pipeline  
-      - Modern PHPMailer integration with:
-
-        - try/catch guards  
-        - authenticated SMTP delivery  
-        - safer From/Reply-To handling  
-        - HTML message template  
-        - spam-safe headers  
-
-    ### ✔ 5. Hardened Frontend JS Pipeline  
-      - contact.js now includes:
-
-        - loading states  
-        - toast messages  
-        - AJAX submission  
-        - graceful fallback  
-        - improved error handling  
->>>>>>> 5148c5d7999efe2e6f4ba2ccd574a3532a969a5b
 
 ---
 
@@ -209,15 +178,9 @@ Your contact functionality now works like a **real API service**:
 4️⃣ Insert message log (email_sent = 0)  
 5️⃣ Attempt SMTP send  
 6️⃣ Update message log with success or failure  
-<<<<<<< HEAD
 7️⃣ Send JSON response
 
 This makes your contact form **reliable, secure, and production-ready.** and **Logging ensures no message is ever lost.**
-=======
-7️⃣ Send JSON response  
-
-This makes your contact form **reliable, secure, and production-ready.**
->>>>>>> 5148c5d7999efe2e6f4ba2ccd574a3532a969a5b
 
 ---
 
@@ -225,7 +188,6 @@ This makes your contact form **reliable, secure, and production-ready.**
 
 `public/contact.php` now loads files in a safe deterministic order:
 
-<<<<<<< HEAD
 1. `paths.php`
 2. `bootstrap.php`
 3. `vendor/autoload.php` (PHPMailer)
@@ -238,20 +200,6 @@ This prevents:
 - nav links disappearing
 - PATH constant errors
 - duplicate config loading
-=======
-1. `paths.php`  
-2. `bootstrap.php`  
-3. `vendor/autoload.php` (PHPMailer)  
-4. Controller execution  
-5. View rendering  
-
-This prevents:
-
-- header not rendering  
-- nav links disappearing  
-- PATH constant errors  
-- duplicate config loading  
->>>>>>> 5148c5d7999efe2e6f4ba2ccd574a3532a969a5b
 
 ---
 
@@ -299,12 +247,13 @@ Portfolio/
 │    │   ├── ProjectController.php    # Project pages with pagination + filters`
 │    │   ├── NotesController.php      # Notes, categories, tags, pinned notes`
 │    │   └── ContactController.php    # Developer contact info
+│    │   └── DownloadController.php    # Call Service call for download cv
 │    │
 |    ├── Helpers/ # These files contain reusable PHP helper functions used across all pages.`)
 |    |     ├── helpers.php # Keep code DRY and avoid repeating logic everywhere.`)
 |    |     ├── sanitizer.php # Security layer for all user-facing output.`)
 │    │     ├── view_helpers.php # Keep view logic clean without mixing PHP logic in templates.`)
-│    │     ├── logger.php # Logging utility
+│    │     ├── logger.php # Logging utility (normal + cv logs file)
 |    |
 |    ├── Models/ # Models are responsible for data fetching, fallback values, and business logic. Views NEVER touch SQL; all SQL is inside Models. (DB → Cache → JSON → Fallback)
 │    │    ├── AboutModel.php # Loads about sections using DB → JSON → fallback`)
@@ -319,6 +268,7 @@ Portfolio/
 │    |    ├── MailService.php # Email handler (contact form)`)
 │    │    ├── HeaderData.php  # Dynamic header data provider
 │    │    └── FooterData.php  # Dynamic footer data provider
+│    │    └── CVService.php  # Complete isolation from Downloadcontrollers
 │    ├── Core/ # Core contains the foundation of your backend system.`)
 │    │    ├── App.php  # Enterprise Router for your MVC system
 │    │    ├── Controller.php
@@ -420,11 +370,7 @@ Portfolio/
 │     ├── index.php # single entry point
 │     ├── .htaccess # Router rewrite
 │     ├── downloadcv.php # download the CV
-<<<<<<< HEAD
 │     ├── send_message.php # Send Email (SMTP) & legacy fallback if needed
-=======
-│     ├── send_message.php # Send Email (SMTP)
->>>>>>> 5148c5d7999efe2e6f4ba2ccd574a3532a969a5b
 │
 ├── routes/
 │    └── web.php
