@@ -1,7 +1,12 @@
 <?php
-require_once dirname(__DIR__, 2) . "/Services/FooterData.php";
+require_once FOOTERSERVICE_FILE; ;
 
-$data          = (new FooterData($db ?? null))->get();
+use app\core\DB;
+use app\Services\FooterData;
+
+$db = DB::getInstance()->pdo();
+
+$data          = (new FooterData($db))->get();
 $footer        = $data['footer'];
 $footer_links  = $data['links'];
 $social_links  = $data['social'];

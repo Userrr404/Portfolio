@@ -1,0 +1,22 @@
+[
+  {
+    "platform": "GitHub",
+    "url": "fromdefaulthttps://github.com",
+    "icon_class": "fa-github"
+  },
+  {
+    "platform": "LinkedIn",
+    "url": "https://linkedin.com",
+    "icon_class": "fa-linkedin"
+  },
+  {
+    "platform": "Twitter",
+    "url": "https://twitter.com",
+    "icon_class": "fa-twitter"
+  },
+  {
+    "platform": "Email",
+    "url": "mailto:hello@example.com",
+    "icon_class": "fa-envelope"
+  }
+]

@@ -72,6 +72,6 @@ $extra_js   = $extra_js ?? [];
     <div id="scroll-progress"></div>
 
     <!-- AUTO HEADER -->
-    <?php include HEADER_FILE; ?>
+    <?php include COMPONENT_HEADER_FILE; ?>
 
     <main class="flex-grow">

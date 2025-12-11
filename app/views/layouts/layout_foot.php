@@ -1,7 +1,7 @@
 </main>
 
     <!-- AUTO FOOTER -->
-    <?php include FOOTER_FILE; ?>
+    <?php include COMPONENT_FOOTER_FILE; ?>
 
     <!-- GLOBAL JS -->
     <script src="<?= SCROLL_PROGRESS_JS ?>"></script>

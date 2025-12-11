@@ -1,9 +1,13 @@
 <?php
-require_once dirname(__DIR__, 2) . "/Services/HeaderData.php";
+require_once HEADERSERVICE_FILE;
 
+use app\core\DB;
+use app\Services\HeaderData;
 
-// Fetch header + nav with guaranteed fallback
-$data = (new HeaderData($db ?? null))->get();
+$db = DB::getInstance()->pdo();
+
+// Pass DB to HeaderData
+$data = (new HeaderData($db))->get();
 $header     = $data['header'];
 $nav_links  = $data['nav'];
 

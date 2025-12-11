@@ -63,6 +63,15 @@ define('NOTE_MODEL_FILE', MODELS_PATH . 'NoteModel.php');
 define('DEFAULTS_PATH', RESOURCES_PATH . 'defaults/');
 
 /* RESOURCES DEFAULTS SUBFOLDERS & EACH FOLDER FILES*/
+define('HEADER_DEFAULTS_PATH', DEFAULTS_PATH . 'header/');
+define('HEADER_DEFAULT_FILE', HEADER_DEFAULTS_PATH . 'header.json');
+define('NAV_DEFAULT_FILE', HEADER_DEFAULTS_PATH . 'navigation.json');
+
+define('FOOTER_DEFAULTS_PATH', DEFAULTS_PATH . 'footer/');
+define('FOOTER_DEFAULT_FILE', FOOTER_DEFAULTS_PATH . 'footer.json');
+define('FOOTER_LINKS_DEFAULT_FILE', FOOTER_DEFAULTS_PATH . 'links.json');
+define('FOOTER_SOCIAL_DEFAULT_FILE', FOOTER_DEFAULTS_PATH . 'social.json');
+
 define('HOME_DEFAULTS_PATH', DEFAULTS_PATH . 'home/');
 define('HOME_DEFAULT_FILE', HOME_DEFAULTS_PATH . 'home.json');
 define('HOME_CONTACT_DEFAULT_FILE', HOME_DEFAULTS_PATH . 'contact.json');
@@ -99,18 +108,18 @@ define('CONTACT_TOAST_DEFAULT_FILE', CONTACT_DEFAULTS_PATH . 'contact_toast.json
 
 
 define('CACHESERVICE_FILE', SERVICES_PATH . 'CacheService.php');
-define('FOOTERDATA_FILE', SERVICES_PATH . 'FooterData.php');
-define('HEADERDATA_FILE', SERVICES_PATH . 'HeaderData.php');
+define('FOOTERSERVICE_FILE', SERVICES_PATH . 'FooterService.php');
+define('HEADERSERVICE_FILE', SERVICES_PATH . 'HeaderService.php');
 define('MAILSERVICE_FILE', SERVICES_PATH . 'MailService.php');
 
 /* VIEWS SUBFOLDERS & EACH FOLDER FILES */
 define('LAYOUTS_PATH', VIEWS_PATH . 'layouts/');
 define('LAYOUT_HEAD_FILE', LAYOUTS_PATH . 'layout_head.php');
 define('LAYOUT_FOOT_FILE', LAYOUTS_PATH . 'layout_foot.php');
-define('HEADER_FILE', LAYOUTS_PATH . 'header.php');
-define('FOOTER_FILE', LAYOUTS_PATH . 'footer.php');
 
 define('COMPONENTS_PATH', VIEWS_PATH . 'components/');
+define('COMPONENT_HEADER_FILE', COMPONENTS_PATH . 'header.php');
+define('COMPONENT_FOOTER_FILE', COMPONENTS_PATH . 'footer.php');
 
 define('PAGES_PATH', VIEWS_PATH . 'pages/');
 define('ABOUT_VIEW_FILE', PAGES_PATH . 'about.php');

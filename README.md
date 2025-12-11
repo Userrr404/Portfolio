@@ -266,8 +266,8 @@ Portfolio/
 |    ├── Servicess/ # These are services — reusable backend components.`)
 │    |    ├── CacheService.php # JSON caching (fast responses)`)
 │    |    ├── MailService.php # Email handler (contact form)`)
-│    │    ├── HeaderData.php  # Dynamic header data provider
-│    │    └── FooterData.php  # Dynamic footer data provider
+│    │    ├── HeaderService.php  # Dynamic header data provider
+│    │    └── FooterService.php  # Dynamic footer data provider
 │    │    └── CVService.php  # Complete isolation from Downloadcontrollers with rateLimit
 │    ├── Core/ # Core contains the foundation of your backend system.`)
 │    │    ├── App.php  # Enterprise Router for your MVC system
@@ -287,15 +287,28 @@ Portfolio/
 │    │    │     ├── index.php
 │    │    │
 │    │    ├── pages/              # 📄 Page Views
-│    │          ├── about.php
-│    │          ├── projects.php
-│    │          ├── notes.php
-│    │          ├── contact.php
+│    │    |     ├── about.php
+│    │    |     ├── projects.php
+│    │    |     ├── notes.php
+│    │    |     ├── contact.php
+|    |    |
+│    │    ├── components/              # 📄 Page Views
+│    │          ├── header.php          # Navigation bar
+│    │          ├── footer.php          # Footer UI
 │    │
 │    │
 │    ├── resources/
 │       └── defaults/              # JSON fallback files when DB is empty)
 │           │
+│           ├── header/                 # JSON defaults for header)
+│           │   ├── header.json
+│           │   ├── navigation.json
+|           |
+│           ├── footer/                 # JSON defaults for footer)
+│           │   ├── footer.json
+│           │   ├── links.json
+│           │   ├── social.json
+|           |
 │           ├── about/                 # JSON defaults for About page)
 │           │   ├── content.json
 │           │   ├── education.json
