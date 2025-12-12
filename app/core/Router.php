@@ -23,21 +23,27 @@ class Router
 
     private function normalize(string $uri): string
     {
-        return '/' . trim($uri, '/');
+        $uri = parse_url($uri, PHP_URL_PATH);
+
+        $basePath = dirname($_SERVER['SCRIPT_NAME']);
+
+        if($basePath !== '/' && strpos($uri, $basePath) === 0){
+            $uri = substr($uri, strlen($basePath));
+        }
+
+        if($uri === '' || $uri === false){
+            return '/';
+        }
+        // return '/' . trim($uri, '/');
+        return $uri;
     }
 
     public function dispatch()
     {
         $method = $_SERVER['REQUEST_METHOD'];
+        
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        // $normalizedPath = $this->normalize($path);
-
-        # REMOVE the subdirectory /Portfolio/public from the request
-        $base = "/Portfolio/public";
-        if (strpos($path, $base) === 0) {
-            $path = substr($path, strlen($base));
-        }
-
+        
         $normalizedPath = $this->normalize($path);
 
         // Check for exact match if exists

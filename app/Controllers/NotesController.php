@@ -1,5 +1,11 @@
 <?php
 namespace app\Controllers;
+
+use app\Core\Controller;
+use app\Models\NoteModel;
+use app\Services\CacheService;
+use Throwable;
+
 class NotesController extends Controller
 {
     private NoteModel $notes;
@@ -18,7 +24,7 @@ class NotesController extends Controller
         try {
             // 1. Try reading cache
             if ($cached = CacheService::load($this->cacheKey)) {
-                return $cached;
+                return $this->view("pages/notes", $cached);
             }
 
             // 2. Fetch DB data (model handles fallback)
@@ -34,18 +40,18 @@ class NotesController extends Controller
                 CacheService::save("notes_page", $data, 3600); // 1 hour
             }
 
-            return $data;
+            return $this->view("pages/notes", $data);
 
         } catch (Throwable $e) {
 
             app_log("NotesController@index failed: " . $e->getMessage(), "error");
 
-            return [
+            return $this->view("pages/notes", [
                 "notes"        => ["data" => []],
                 "categories"   => ["data" => []],
                 "tags"         => ["data" => []],
                 "pinned_notes" => ["data" => []],
-            ];
+            ]);
         }
     }
 

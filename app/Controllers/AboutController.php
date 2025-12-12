@@ -1,7 +1,7 @@
 <?php
 namespace app\Controllers;
 
-use app\core\Controller;
+use app\Core\Controller;
 use app\Models\AboutModel;
 use app\Services\CacheService;
 use Throwable;
@@ -41,7 +41,7 @@ class AboutController extends Controller
              * 1. Try loading full page from cache
              * --------------------------------------------------- */
             if ($cached = CacheService::load($this->cacheKey)) {
-                return $cached; // Return cached version immediately
+                return $this->view("pages/about", $cached); // Return cached version immediately
             }
 
             /** ---------------------------------------------------
@@ -69,7 +69,7 @@ class AboutController extends Controller
                 CacheService::save($this->cacheKey, $data);
             }
 
-            return $data;
+            return $this->view("pages/about", $data);
 
         } catch (Throwable $e) {
 
@@ -78,14 +78,14 @@ class AboutController extends Controller
             /** ---------------------------------------------------
              * D. Emergency fallback (controller-level protection)
              * --------------------------------------------------- */
-            return [
+            return $this->view("pages/about",[
                 "hero"       => ["data" => $this->about->defaultHero()],
                 "content"    => ["data" => $this->about->defaultContent()],
                 "skills"     => ["data" => $this->about->defaultSkills()],
                 "experience" => ["data" => $this->about->defaultExperience()],
                 "education"  => ["data" => $this->about->defaultEducation()],
                 "stats"      => ["data" => $this->about->defaultStats()],
-            ];
+            ]);
         }
     }
 

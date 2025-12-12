@@ -1,5 +1,11 @@
 <?php
 namespace app\Controllers;
+
+use app\Core\Controller;
+use app\Models\ContactModel;
+use app\Services\CacheService;
+use Throwable;
+
 class ContactController extends Controller
 {
     /** @var ContactModel Handles DB/JSON/fallback for contact page */
@@ -31,7 +37,7 @@ class ContactController extends Controller
         try {
             // 1) Try full page cache first
             if ($cached = CacheService::load($this->cacheKey)) {
-                return $cached;
+                return $this->view("pages/contact", $cached);
             }
 
             // 2) Load each section safely and independently
@@ -48,19 +54,19 @@ class ContactController extends Controller
                 CacheService::save($this->cacheKey, $sections);
             }
 
-            return $sections;
+            return $this->view("pages/contact", $sections);
 
         } catch (Throwable $e) {
             app_log("ContactController@index failed: " . $e->getMessage(), "error");
 
             // Emergency fallback - return guaranteed non-empty defaults from model
-            return [
+            return $this->view("pages/contact", [
                 "hero"    => ["from_db" => false, "data" => $this->contact->fallback("hero")],
                 "info"    => ["from_db" => false, "data" => $this->contact->fallback("info")],
                 "socials" => ["from_db" => false, "data" => $this->contact->fallback("socials")],
                 "map"     => ["from_db" => false, "data" => $this->contact->fallback("map")],
                 "toast"   => ["from_db" => false, "data" => $this->contact->fallback("toast")],
-            ];
+            ]);
         }
     }
 

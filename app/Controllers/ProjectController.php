@@ -1,5 +1,10 @@
 <?php
 namespace app\Controllers;
+
+use app\core\Controller;
+use app\Models\ProjectModel;
+use app\Services\CacheService;
+use Throwable;
 class ProjectController extends Controller
 {
     private ProjectModel $projects;
@@ -38,7 +43,7 @@ class ProjectController extends Controller
              * 1. FULL PAGE CACHE
              * --------------------------------------------------- */
             if ($cached = CacheService::load($this->cacheKey)) {
-                return $cached;
+                return $this->view("pages/projects", $cached);
             }
 
             /* ---------------------------------------------------
@@ -82,13 +87,13 @@ class ProjectController extends Controller
                 CacheService::save($this->cacheKey, $final);
             }
 
-            return $final;
+            return $this->view("pages/projects", $final);
 
         } catch (Throwable $e) {
 
             app_log("ProjectController@index ERROR: " . $e->getMessage(), "error");
 
-            return [
+            return $this->view("pages/projects", [
                 "projects"   => $this->projects->defaultProjects(),
                 "techList"   => $this->projects->defaultTechList(),
                 "page"       => 1,
@@ -98,7 +103,7 @@ class ProjectController extends Controller
                     "tech" => null,
                     "featured" => false
                 ],
-            ];
+            ]);
         }
     }
 

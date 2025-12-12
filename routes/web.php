@@ -1,10 +1,10 @@
 <?php
 
 $router->get('/', 'HomeController@index');
-$router->get('/about', 'AboutController@about');
+$router->get('/about', 'AboutController@index');
 $router->get('/projects', 'ProjectController@index');
 $router->get('/notes', 'NotesController@index');
-$router->get('/contact', 'ContactController@contact');
+$router->get('/contact', 'ContactController@index');
 
 // API-like routs
 $router->post('/contact/send', 'ContactController@sendMessage');
