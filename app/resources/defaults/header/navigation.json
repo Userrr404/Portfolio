@@ -2,5 +2,6 @@
   {"label": "fromdefault Home", "url": "/"},
   {"label": "About", "url": "/about"},
   {"label": "Projects", "url": "/projects"},
+  {"label": "Notes", "url": "/notes"},
   {"label": "Contact", "url": "/contact"}
 ]
