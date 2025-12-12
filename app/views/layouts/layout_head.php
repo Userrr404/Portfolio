@@ -16,8 +16,9 @@ $extra_js   = $extra_js ?? [];
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title><?= htmlspecialchars($page_title) ?></title>
 
@@ -33,12 +34,12 @@ $extra_js   = $extra_js ?? [];
 
     <!-- Page-level CSS -->
     <?php foreach ($custom_css as $css): ?>
-        <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>">
+        <link rel="stylesheet" href="<?= $css ?>">
     <?php endforeach; ?>
 
     <!-- Extra CSS -->
     <?php foreach ($extra_css as $css): ?>
-        <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>">
+        <link rel="stylesheet" href="<?= $css ?>">
     <?php endforeach; ?>
 
     <!-- Tailwind + Config -->
@@ -51,7 +52,7 @@ $extra_js   = $extra_js ?? [];
 
     <!-- Extra JS -->
     <?php foreach ($extra_js as $js): ?>
-        <script src="<?= htmlspecialchars($js) ?>"></script>
+        <script src="<?= $js ?>"></script>
     <?php endforeach; ?>
 
     <!-- reCAPTCHA v3 Script (only if site key exists) -->

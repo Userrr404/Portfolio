@@ -209,7 +209,7 @@ define('RESUME_URL', DOWNLOADS_PATH . 'Yogesh_Lilake_Resume.pdf');
 /* ---------------------------------------------
    11. PAGE ROUTES (URL)
 ---------------------------------------------- */
-define('HOME_URL', BASE_URL . 'index.php');
+define('HOME_URL', BASE_URL);
 define('ABOUT_URL', BASE_URL . 'about.php');
 define('PROJECTS_URL', BASE_URL . 'projects.php');
 define('NOTES_URL', BASE_URL . 'notes.php');
@@ -225,9 +225,18 @@ define('DOWNLOADS_CV_URL', BASE_URL . 'download-cv.php');
 define('SITE_TITLE', 'Yogesh Lilake');
 define('SITE_LOGO', IMG_URL . 'logo.png');
 define('FAVICON_PATH', IMG_URL . 'favicon.png');
-define('CTA_TEXT', 'Download CV');
-define('CTA_LINK', ASSETS_URL . 'Yogesh_Lilake_Resume.pdf');
+define('CTA_TEXT', 'Hire Me');
+define('CTA_LINK', '/contact');
 define('ACCENT_COLOR', '#ff5a5a');
+
+// =============================
+// PAGE ROUTES WITHOUT BASE URL (for DB storage)
+// =============================
+define("HOME_URL_NO_BASE", '/');
+define("ABOUT_URL_NO_BASE", '/about');
+define("PROJECTS_URL_NO_BASE", '/projects');
+define("NOTES_URL_NO_BASE", '/notes');
+define("CONTACT_URL_NO_BASE", '/contact');
 
 // =============================
 // EXTERNAL LIBRARY URLs (Tailwind, Font Awesome, Lottie)

@@ -15,7 +15,23 @@ $nav_links  = $data['nav'];
 $header_css = [HEADER_CSS];
 $header_js  = [HEADER_JS];
 
-$current_page = basename($_SERVER['PHP_SELF']);
+// Detect project base URL (ex: /Portfolio/public)
+$BASE_URL = dirname($_SERVER['SCRIPT_NAME']);
+if ($BASE_URL === "/") $BASE_URL = "";
+
+// Detect FULL request URI (ex: /Portfolio/public/about)
+$currentUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// Remove base path from URI → gives clean route (/about)
+if ($BASE_URL !== "" && strpos($currentUri, $BASE_URL) === 0) {
+    $currentUri = substr($currentUri, strlen($BASE_URL));
+}
+
+// Normalize
+$currentRoute = "/" . trim($currentUri, "/");
+if ($currentRoute === "//" || $currentRoute === "/") {
+    $currentRoute = "/";
+}
 ?>
 
 <!-- HEADER CSS -->
@@ -42,15 +58,32 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <!-- DESKTOP NAV -->
     <nav class="hidden md:flex space-x-6 text-clamp">
       <?php foreach ($nav_links as $link): ?>
-        <a href="<?= htmlspecialchars($link['url']) ?>"
-            class="<?= ($current_page === basename($link['url'])) ? 'text-accent' : 'hover:text-accent' ?>">
+        <?php
+          // Normalize DB URL (ex: "about" → "/about")
+          $linkUrl = "/" . trim($link['url'], "/");
+
+          // Final clickable URL with base path
+          $finalUrl = $BASE_URL . $linkUrl;
+
+          // Check active
+          $isActive = ($currentRoute === $linkUrl);
+        ?>
+        <a href="<?= $finalUrl ?>"
+            class="<?= $isActive ? 'text-accent underline underline-offset-8 decoration-2 font-semibold' : 'hover:text-accent' ?>">
           <?= htmlspecialchars($link['label']) ?>
         </a>
       <?php endforeach; ?>
     </nav>
 
+    <?php
+      // Normalize CTA link
+      $link = $header['button_link'];
+      $link = preg_replace('/\.php$/', '', $link);     // remove contact.php
+      $link = '/' . trim($link, '/');                  // ensure /contact
+      $btnUrl = $BASE_URL . $link;                     // add base path
+    ?>
     <!-- CTA BUTTON -->
-    <a href="<?= htmlspecialchars($header['button_link']) ?>"
+    <a href="<?= $btnUrl ?>"
         class="hidden sm:inline-block bg-gradient-to-r from-[#d32f2f] via-[#ff5a5a] to-[#ff8c5a] text-darkbg font-bold px-5 py-2 rounded-md btn-glow">
       <?= htmlspecialchars($header['button_text']) ?>
     </a>
@@ -67,7 +100,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <div id="mobileMenu" class="md:hidden hidden bg-[#111] border-t border-[#333] text-white">
       <nav class="flex flex-col p-4 space-y-3 font-medium text-base">
         <?php foreach ($nav_links as $link): ?>
-          <a href="<?= htmlspecialchars($link['url']) ?>" class="hover:text-accent">
+          <?php $mobileUrl = $BASE_URL . "/" . trim($link['url'], "/"); ?>
+          <a href="<?= $mobileUrl ?>" class="hover:text-accent">
             <?= htmlspecialchars($link['label']) ?>
           </a>
           <?php endforeach; ?>

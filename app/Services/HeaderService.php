@@ -128,7 +128,7 @@ class HeaderData {
     private function defaultHeader(): array
     {
         return [
-            "site_title"   => 'Yogesh Lil',
+            "site_title"   => SITE_TITLE,
             "logo_path"    => SITE_LOGO,
             "button_text"  => CTA_TEXT,
             "button_link"  => CTA_LINK,
@@ -139,10 +139,11 @@ class HeaderData {
     private function defaultNav(): array
     {
         return [
-            ["label" => "Home",    "url" => HOME_URL],
-            ["label" => "About",   "url" => ABOUT_URL],
-            ["label" => "Projects","url" => PROJECTS_URL],
-            ["label" => "Contact", "url" => CONTACT_URL]
+            ["label" => "Home",    "url" => HOME_URL_NO_BASE],
+            ["label" => "About",   "url" => ABOUT_URL_NO_BASE],
+            ["label" => "Projects","url" => PROJECTS_URL_NO_BASE],
+            ["label" => "Notes",    "url" => NOTES_URL_NO_BASE],
+            ["label" => "Contact", "url" => CONTACT_URL_NO_BASE]
         ];
     }
 
