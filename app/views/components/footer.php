@@ -16,6 +16,18 @@ $year = date("Y");
 // Footer asset files
 $footer_css = [FOOTER_CSS];
 $footer_js  = [FOOTER_JS];
+
+// Detect project base URL (ex: /Portfolio/public)
+$BASE_URL = dirname($_SERVER['SCRIPT_NAME']);
+if ($BASE_URL === "/") $BASE_URL = "";
+
+// Detect FULL request URI (ex: /Portfolio/public/about)
+$currentUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// Remove base path from URI → gives clean route (/about)
+if ($BASE_URL !== "" && strpos($currentUri, $BASE_URL) === 0) {
+    $currentUri = substr($currentUri, strlen($BASE_URL));
+}
 ?>
 
 <!-- FOOTER CSS -->
@@ -50,7 +62,14 @@ $footer_js  = [FOOTER_JS];
             </h3>
             <div class="grid grid-cols-2 sm:grid-cols-1 gap-x-6 sm:gap-x-0 gap-y-1">
                 <?php foreach ($footer_links as $link): ?>
-                    <a href="<?= htmlspecialchars($link['url']) ?>"
+                    <?php
+                        // Normalize DB URL (ex: "about" → "/about")
+                        $linkUrl = "/" . trim($link['url'], "/");
+
+                        // Final clickable URL with base path
+                        $finalUrl = $BASE_URL . $linkUrl;
+                    ?>
+                    <a href="<?= $finalUrl ?>"
                        class="hover:text-accent transition-colors duration-300">
                         <?= htmlspecialchars($link['label']) ?>
                     </a>            

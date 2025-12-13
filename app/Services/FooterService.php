@@ -187,10 +187,11 @@ class FooterData
     private function defaultLinks(): array
     {
         return [
-            ["label" => "DD Home",     "url" => HOME_URL],
-            ["label" => "About",    "url" => ABOUT_URL],
-            ["label" => "Projects", "url" => PROJECTS_URL],
-            ["label" => "Contact",  "url" => CONTACT_URL]
+            ["label" => "DD Home",     "url" => HOME_URL_NO_BASE],
+            ["label" => "About",    "url" => ABOUT_URL_NO_BASE],
+            ["label" => "Projects", "url" => PROJECTS_URL_NO_BASE],
+            ["label" => "Notes",    "url" => NOTES_URL_NO_BASE],
+            ["label" => "Contact",  "url" => CONTACT_URL_NO_BASE]
         ];
     }
 
