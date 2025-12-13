@@ -1,6 +1,11 @@
 <?php
 namespace app\Models;
 
+use PDO;
+use app\Services\CacheService;
+use app\Core\DB;
+use Throwable;
+
 class NoteModel
 {
 
