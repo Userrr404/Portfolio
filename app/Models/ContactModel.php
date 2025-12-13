@@ -34,7 +34,7 @@ class ContactModel {
 
             $stmt = $pdo->prepare("
                 SELECT title, subtitle, button_text, button_link
-                FROM contact_section1
+                FROM contact_section
                 WHERE is_active = 1
                 LIMIT 1
             ");
@@ -74,7 +74,7 @@ class ContactModel {
             "title"       => "D Get In Touch",
             "subtitle"    => "Feel free to contact me for collaborations, projects, or job opportunities.",
             "button_text" => "Contact Me",
-            "button_link" => "contact.php"
+            "button_link" => "contact"
         ];
     }
 

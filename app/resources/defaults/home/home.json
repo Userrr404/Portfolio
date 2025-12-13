@@ -8,10 +8,10 @@
     "profile_image": "assets/images/Profile.jpg",
 
     "cta_primary_text": "View Projects",
-    "cta_primary_link": "projects.php",
+    "cta_primary_link": "projects",
 
     "cta_secondary_text": "Download CV",
-    "cta_secondary_link": "download-cv.php",
+    "cta_secondary_link": "downloadcv",
 
     "cv_file_path": "downloads/Yogesh_Lilake_Resume.pdf",
 

@@ -52,12 +52,12 @@ require_once LAYOUT_HEAD_FILE;
     </p>
 
     <div class="flex flex-wrap justify-center gap-4 reveal">
-        <a href="<?= field($home, 'cta_primary_link') ?>"
+        <a href="<?= url($home['cta_primary_link'] ?? '') ?>"
             class="bg-accent text-darkbg px-6 py-3 rounded-full font-semibold hover:bg-red-600 transition">
             <?= field($home, 'cta_primary_text') ?>
         </a>
 
-        <button onclick="ajaxDownload('<?= DOWNLOAD_CV_URL ?>', 'Yogesh_Lilake_Resume.pdf')"
+        <button onclick="ajaxDownload('<?= url($home['cta_secondary_link'] ?? '') ?>', 'Yogesh_Lilake_Resume.pdf')"
             class="btn border border-accent text-accent px-6 py-3 rounded-full font-semibold hover:bg-accent hover:text-darkbg transition">
             <?= field($home, 'cta_secondary_text') ?>
         </button>
@@ -128,7 +128,7 @@ require_once LAYOUT_HEAD_FILE;
     </div>
 
     <div class="text-center mt-10">
-        <a href="/projects" 
+        <a href="<?= url('projects') ?>"
            class="border border-accent text-accent px-6 py-3 rounded-full hover:bg-accent hover:text-darkbg transition">
             See All Projects
         </a>
@@ -145,7 +145,7 @@ require_once LAYOUT_HEAD_FILE;
         <?= field($contact, 'subtitle') ?>
     </p>
 
-    <a href="<?= field($contact, 'button_link') ?>" 
+    <a href="<?= url($contact['button_link'] ?? '') ?>" 
        class="bg-accent text-darkbg px-6 py-3 rounded-full font-semibold hover:bg-red-600 transition">
        <?= field($contact, 'button_text') ?>
     </a>

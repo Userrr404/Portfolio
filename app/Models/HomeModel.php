@@ -94,12 +94,15 @@ class HomeModel
             "profile_image"     => IMG_URL . "profile-default.png",
 
             "cta_primary_text"  => "View Projects",
-            "cta_primary_link"  => "/projects",
+            "cta_primary_link"  => "projects",
 
             "cta_secondary_text" => "Download CV",
-            "cta_secondary_link" => "/downloadcv",
+            "cta_secondary_link" => "downloadcv",
 
-            "cv_file_path"      => "/downloads/Yogesh_Lilake_Resume.pdf",
+            "cv_file_path"      => "downloads/Yogesh_Lilake_Resume.pdf",
+
+            "seo_title"         => "Avinash Portfolio | Full Stack & Android Developer",
+            "seo_description"   => "Portfolio of Avinash, a Full Stack Developer building high-performance web and mobile applications using PHP, JS, MySQL and modern frameworks.",
 
             "is_active"   => 1,
             "is_default"  => true

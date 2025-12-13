@@ -14,8 +14,6 @@ class ProjectController extends Controller
 
     public function __construct()
     {
-        require_once PROJECT_MODEL_FILE;
-        require_once CACHESERVICE_FILE;
 
         $this->projects = new ProjectModel();
     }

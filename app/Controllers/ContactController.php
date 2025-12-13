@@ -16,8 +16,6 @@ class ContactController extends Controller
 
     public function __construct()
     {
-        require_once CONTACT_MODEL_FILE;
-        require_once CACHESERVICE_FILE;
 
         $this->contact = new ContactModel();
     }

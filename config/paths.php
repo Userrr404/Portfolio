@@ -216,9 +216,6 @@ define('NOTES_URL', BASE_URL . 'notes.php');
 define('CONTACT_URL', BASE_URL . 'contact.php');
 
 
-define('DOWNLOADS_CV_URL', BASE_URL . 'download-cv.php');
-
-
 /* ---------------------------------------------
    13. OTHER CONSTANTS
 ---------------------------------------------- */

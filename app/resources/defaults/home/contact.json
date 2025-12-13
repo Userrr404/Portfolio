@@ -2,6 +2,6 @@
     "title": "Get In Touch from defaultPath",
     "subtitle": "Feel free to contact me for collaborations, projects, or job opportunities.",
     "button_text": "Contact Me",
-    "button_link": "contact.php",
+    "button_link": "contact",
     "is_default": true
 }

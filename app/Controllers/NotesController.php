@@ -13,8 +13,6 @@ class NotesController extends Controller
 
     public function __construct()
     {
-        require_once NOTE_MODEL_FILE;
-        require_once CACHESERVICE_FILE;
 
         $this->notes = new NoteModel();
     }
