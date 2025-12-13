@@ -47,7 +47,7 @@ require_once LAYOUT_HEAD_FILE;
             <img src="<?= esc(img_url($p['image_path'])) ?>" alt="<?= esc($p['title']) ?>" 
                   class="absolute inset-0 w-full h-full object-cover group-hover:opacity-80 transition-opacity">
             <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-              <a href="<?= esc($p['project_link']) ?>"
+              <a href="<?= BASE_URL ?>projects/<?= esc($p['slug']) ?>"
                   class="bg-accent text-darkbg px-5 py-2 rounded-full font-semibold hover:bg-red-600 transition">
                     View Project
               </a>

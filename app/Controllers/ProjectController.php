@@ -138,6 +138,26 @@ class ProjectController extends Controller
         }
     }
 
+    /**
+     * Controller entry point for individual project detail page
+     */
+    public function show(string $slug)
+    {
+        // 🔍 TEMP DEBUG (remove after test)
+        app_log("Project slug requested: " . $slug, "debug");
+
+        $project = $this->projects->getBySlug($slug);
+
+        if (!$project) {
+            http_response_code(404);
+            echo "<h1>404 - Project not found</h1>";
+            exit;
+        }
+
+        return $this->view("pages/project-detail", [
+            "project" => $project
+        ]);
+    }
 
     /** TRUE only when ALL sections were from DB */
     private function hasRealData(array $sections): bool
@@ -148,5 +168,12 @@ class ProjectController extends Controller
             }
         }
         return true;
+    }
+
+    public function abort(int $code, string $message = "")
+    {
+        http_response_code($code);
+        echo "<h1>{$code} - {$message}</h1>";
+        exit;
     }
 }

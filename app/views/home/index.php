@@ -118,7 +118,7 @@ require_once LAYOUT_HEAD_FILE;
                         <h3 class="text-xl font-semibold mb-2"><?= field($project, 'title') ?></h3>
                         <p class="text-gray-400 text-sm mb-4"><?= field($project, 'description') ?></p>
 
-                        <a href="<?= field($project, 'project_link') ?>" class="text-accent hover:underline">
+                        <a href="<?= url('projects/' . $project['slug']) ?>" class="text-accent hover:underline font-semibold">
                             View →
                         </a>
                     </div>

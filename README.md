@@ -291,6 +291,7 @@ Portfolio/
 │    │    |     ├── projects.php
 │    │    |     ├── notes.php
 │    │    |     ├── contact.php
+│    │    |     ├── project-detail.php   # single project detail page according to {slug}
 |    |    |
 │    │    ├── components/              # 📄 Page Views
 │    │          ├── header.php          # Navigation bar
@@ -376,8 +377,9 @@ Portfolio/
 │     │      │   ├── tailwind-config.js
 │     │      │   ├── toast.js
 │     │      │
-│     │      ├── projects/                   # All projects images
-│     │      └── images/                     # All website images, icons, thumbnails`)
+│     │      ├── images/                     # All website images, icons, thumbnails`)
+│     │          └── projects/              # All projects images
+│     │                 └── portfolio.png
 │     │
 │     ├── downloads/                # Resume
 │     │       └── .pdf

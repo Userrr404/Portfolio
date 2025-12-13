@@ -417,4 +417,46 @@ class ProjectModel {
             ]
         ];
     }
+
+    public function getBySlug(string $slug): ?array
+{
+    $cacheKey = "project_slug_" . $slug;
+
+    if ($cache = CacheService::load($cacheKey)) {
+        return $cache;
+    }
+
+    try {
+        $pdo = DB::getInstance()->pdo();
+        $stmt = $pdo->prepare("
+            SELECT * 
+            FROM projects 
+            WHERE slug = :slug AND is_active = 1 
+            LIMIT 1
+        ");
+        $stmt->execute(['slug' => $slug]);
+        $project = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($project) {
+            CacheService::save($cacheKey, $project);
+            return $project;
+        }
+    } catch (Throwable $e) {
+        app_log("ProjectModel@getBySlug DB ERROR: " . $e->getMessage(), "error");
+    }
+
+    // JSON fallback
+    $jsonPath = PROJECTS_DEFAULT_FILE;
+    if (file_exists($jsonPath)) {
+        $json = json_decode(file_get_contents($jsonPath), true);
+        foreach ($json as $p) {
+            if (($p['slug'] ?? '') === $slug) {
+                return $p;
+            }
+        }
+    }
+
+    return null;
+}
+
 }

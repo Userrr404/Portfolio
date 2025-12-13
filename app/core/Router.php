@@ -17,79 +17,72 @@ class Router
 
     public function any(string $uri, $action)
     {
-        $this->routes['GET'][$this->normalize($uri)] = $action;
+        $this->routes['GET'][$this->normalize($uri)]  = $action;
         $this->routes['POST'][$this->normalize($uri)] = $action;
     }
 
     private function normalize(string $uri): string
     {
         $uri = parse_url($uri, PHP_URL_PATH);
-
         $basePath = dirname($_SERVER['SCRIPT_NAME']);
 
-        if($basePath !== '/' && strpos($uri, $basePath) === 0){
+        if ($basePath !== '/' && strpos($uri, $basePath) === 0) {
             $uri = substr($uri, strlen($basePath));
         }
 
-        if($uri === '' || $uri === false){
-            return '/';
-        }
-        // return '/' . trim($uri, '/');
-        return $uri;
+        return $uri === '' ? '/' : $uri;
     }
 
     public function dispatch()
     {
         $method = $_SERVER['REQUEST_METHOD'];
-        
-        $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        
-        $normalizedPath = $this->normalize($path);
+        $path   = $this->normalize($_SERVER['REQUEST_URI']);
 
-        // Check for exact match if exists
-        if(!isset($this->routes[$method][$normalizedPath])){
-            $this->abort(404, "Page not found");
-            return;
+        /* ---------- 1. Exact match ---------- */
+        if (isset($this->routes[$method][$path])) {
+            return $this->runAction($this->routes[$method][$path]);
         }
 
-        $action = $this->routes[$method][$normalizedPath];
-
-        if(is_callable($action)){
-            return call_user_func($action);
+        /* ---------- 2. Dynamic routes ---------- */
+        foreach ($this->routes[$method] ?? [] as $route => $action) {
+            $pattern = preg_replace('#\{[a-zA-Z_]+\}#', '([^/]+)', $route);
+            if (preg_match('#^' . $pattern . '$#', $path, $matches)) {
+                array_shift($matches);
+                return $this->runAction($action, $matches);
+            }
         }
 
-        // Controller@method format
-        if(is_string($action) && str_contains($action, '@')){
-            list($controller, $method) = explode('@', $action);
+        return $this->abort(404, "Page not found");
+    }
 
-            $controllerClass = $this->baseNamespace . $controller;
+    private function runAction($action, array $params = [])
+    {
+        if (is_callable($action)) {
+            return call_user_func_array($action, $params);
+        }
 
-            if (!class_exists($controllerClass)) {
-                app_log("Missing controller: $controllerClass", "error");
-                return $this->abort(404, "Page not found");
+        if (is_string($action) && str_contains($action, '@')) {
+            [$controller, $method] = explode('@', $action);
+            $class = $this->baseNamespace . $controller;
+
+            if (!class_exists($class)) {
+                return $this->abort(404, "Controller not found");
             }
 
+            $instance = new $class();
 
-            $instance = new $controllerClass();
-
-            if(!method_exists($instance, $method)){
-                app_log("Missing method: $method in controller $controllerClass", "error");
-                return $this->abort(404, "Page not found");
+            if (!method_exists($instance, $method)) {
+                return $this->abort(404, "Method not found");
             }
 
-            try {
-                return $instance->$method();
-            } catch (Throwable $e) {
-                app_log("Controller execution error: " . $e->getMessage(), "error");
-                return $this->abort(404, "Page not found");
-            }
+            return call_user_func_array([$instance, $method], $params);
         }
     }
 
     public function abort(int $code, string $message = "")
     {
         http_response_code($code);
-        echo "<h1>Error $code</h1><p>$message</p>";
+        echo "<h1>Error {$code}</h1><p>{$message}</p>";
         exit;
     }
 }
