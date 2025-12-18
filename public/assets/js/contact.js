@@ -35,29 +35,18 @@ document.getElementById('contact-form').addEventListener('submit', async functio
   btn.querySelector('.btn-text').classList.add('hidden');
   btn.querySelector('.btn-loading').classList.remove('hidden');
 
-  // Optionally set global constant from server-side - if not available, getRecaptchaToken will handle
-  let token = '';
-  if (typeof RECAPTCHA_SITE_KEY !== "undefined" && RECAPTCHA_SITE_KEY) {
-    if (typeof grecaptcha !== "undefined") {
-      try {
-        token = await grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'contact_submit' });
-      } catch (err) {
-        token = '';
-      }
-    }
-  }
-
-  // Append token to form
-  const form = this;
-  const fd = new FormData(form);
-  if (token) fd.set('recaptcha_token', token);
+  const fd = new FormData(this);
 
   try {
-    const resp = await fetch('send_message.php', { method: 'POST', body: fd });
+    const resp = await fetch('/Portfolio/public/contact/send', {
+      method: 'POST',
+      body: fd
+    });
+
     const data = await resp.json();
     if (data.status === 'success') {
       showToast(data.message, 'success');
-      form.reset();
+      this.reset();
     } else {
       showToast(data.message || 'Error', 'error');
     }

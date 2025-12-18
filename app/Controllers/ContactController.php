@@ -3,7 +3,9 @@ namespace app\Controllers;
 
 use app\Core\Controller;
 use app\Models\ContactModel;
+use app\Models\ContactMessageModel;   // ✅ REQUIRED
 use app\Services\CacheService;
+use app\Services\MailService;
 use Throwable;
 
 class ContactController extends Controller
@@ -20,16 +22,9 @@ class ContactController extends Controller
         $this->contact = new ContactModel();
     }
 
-    /**
-     * Loads the full Contact page using the same 4-step architecture per-section:
-     *  A. Try full page cache
-     *  B. safeLoad() each section (DB → JSON → fallback)
-     *  C. Save full-page cache ONLY if ALL sections were from DB
-     *  D. Emergency fallback (controller-level)
-     *
-     * Each section returned in the shape:
-     *   [ "from_db" => bool, "data" => [...] ]
-     */
+    /* ===========================
+       PAGE RENDER
+    =========================== */
     public function index()
     {
         try {
@@ -40,11 +35,11 @@ class ContactController extends Controller
 
             // 2) Load each section safely and independently
             $sections = [
-                "hero"    => $this->safeLoad(fn() => $this->contact->getHero(),    "hero"),
-                "info"    => $this->safeLoad(fn() => $this->contact->getInfo(),    "info"),
+                "hero"    => $this->safeLoad(fn() => $this->contact->getHero(), "hero"),
+                "info"    => $this->safeLoad(fn() => $this->contact->getInfo(), "info"),
                 "socials" => $this->safeLoad(fn() => $this->contact->getSocials(), "socials"),
-                "map"     => $this->safeLoad(fn() => $this->contact->getMap(),     "map"),
-                "toast"   => $this->safeLoad(fn() => $this->contact->getToast(),   "toast"),
+                "map"     => $this->safeLoad(fn() => $this->contact->getMap(), "map"),
+                "toast"   => $this->safeLoad(fn() => $this->contact->getToast(), "toast"),
             ];
 
             // 3) Cache full page ONLY when ALL sections came from DB (prevent caching defaults)
@@ -127,5 +122,96 @@ class ContactController extends Controller
             }
         }
         return true;
+    }
+
+    /* ===========================
+       API: SEND MESSAGE
+    =========================== */
+    public function sendMessage()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            $data = [
+                'name'    => trim($_POST['name'] ?? ''),
+                'email'   => trim($_POST['email'] ?? ''),
+                'message' => trim($_POST['message'] ?? ''),
+                'hp'      => trim($_POST['hp_name'] ?? ''),
+                'token'   => trim($_POST['recaptcha_token'] ?? ''),
+                'ip'      => $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0',
+                'ua'      => $_SERVER['HTTP_USER_AGENT'] ?? '',
+            ];
+
+            // Honeypot
+            if ($data['hp'] !== '') {
+                app_log("Contact spam blocked", "warning", ["ip" => $data['ip']]);
+                return $this->jsonError("Spam detected");
+            }
+
+            // Validation
+            if ($data['name'] === '' || $data['email'] === '' || $data['message'] === '') {
+                return $this->jsonError("Please fill all fields ❗");
+            }
+            if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                return $this->jsonError("Invalid email address ❗");
+            }
+
+            $model = new ContactMessageModel();
+
+            // Rate limit
+            $model->checkRateLimit($data['ip']);
+
+            // reCAPTCHA
+            $model->verifyRecaptcha($data['token'], $data['ip']);
+
+            // Store message
+            $messageId = $model->storeMessage($data);
+
+            // Send email
+            MailService::sendContactMail($data);
+
+            // Mark success
+            $model->markEmailSuccess($messageId);
+
+            app_log("Contact message sent", "info", [
+                "email" => $data['email'],
+                "ip"    => $data['ip']
+            ]);
+
+            return $this->jsonSuccess("Message sent successfully 🎉");
+
+        } catch (Throwable $e) {
+
+            app_log("Contact send failed", "error", [
+                "exception" => $e->getMessage(),
+                "ip"        => $_SERVER['REMOTE_ADDR'] ?? ''
+            ]);
+
+            // Known, user-safe cases
+            if (str_contains($e->getMessage(), 'Too fast')) {
+                return $this->jsonError("You're sending messages too quickly. Please wait a bit.");
+            }
+
+            if (str_contains($e->getMessage(), 'reCAPTCHA')) {
+                return $this->jsonError("Verification failed. Please try again.");
+            }
+
+            // Unknown / system error
+            return $this->jsonError(
+                "We couldn’t send your message right now. Please try again later."
+            );
+        }
+    }
+
+    private function jsonSuccess(string $msg)
+    {
+        echo json_encode(["status" => "success", "message" => $msg]);
+        exit;
+    }
+
+    private function jsonError(string $msg)
+    {
+        echo json_encode(["status" => "error", "message" => $msg]);
+        exit;
     }
 }

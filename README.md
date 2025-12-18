@@ -16,7 +16,7 @@ A modern, scalable, and production-ready **Portfolio Website** built with
 - No controller or model can crash the page
 - Auto-logs errors.
 - Dynamic layouts + auto asset injection
-- Hardened contact API with security pipeline
+- Enterprise-grade Contact API
 
 ---
 
@@ -50,6 +50,7 @@ This guarantees **no empty UI**, **zero fatal errors**, and **production reliabi
 
 - PHP 8.x or newer
 - MySQL (XAMPP recommended)
+- Composer
 - Git (for version control)
 - VS code (recommended)
 
@@ -131,8 +132,6 @@ The system includes:
           | Per 60 seconds | 1 message |
           | Per hour | Max 5 messages |
 
-      - Implemented inside `send_message.php` using SQL window checks.
-
   ### ✔ 3. Email Delivery Audit Logging
 
       - Every submission is stored safely in DB before attempting to send email.
@@ -160,10 +159,12 @@ The system includes:
       - contact.js now includes:
 
         - loading states
-        - toast messages
+        - Top-right toast messages
         - AJAX submission
         - graceful fallback
         - improved error handling
+        - No page reload
+        - Clean UX
 
 ---
 
@@ -172,13 +173,15 @@ The system includes:
 Your contact functionality now works like a **real API service**:
 
 **Pipeline:**  
-1️⃣ Validate input  
-2️⃣ Honeypot spam check  
-3️⃣ Rate-limit check  
-4️⃣ Insert message log (email_sent = 0)  
-5️⃣ Attempt SMTP send  
-6️⃣ Update message log with success or failure  
-7️⃣ Send JSON response
+  - Input validation
+  - Honeypot spam detection
+  - IP-based rate limiting
+  - reCAPTCHA verification (Pending)
+  - Insert message into DB (email_sent = 0)
+  - Attempt SMTP delivery
+  - Update DB with success/failure
+  - Return JSON response
+  - Log everything internally
 
 This makes your contact form **reliable, secure, and production-ready.** and **Logging ensures no message is ever lost.**
 
@@ -258,6 +261,7 @@ Portfolio/
 |    ├── Models/ # Models are responsible for data fetching, fallback values, and business logic. Views NEVER touch SQL; all SQL is inside Models. (DB → Cache → JSON → Fallback)
 │    │    ├── AboutModel.php # Loads about sections using DB → JSON → fallback`)
 │    │    ├── ContactModel.php # Contact section loader`)
+│    │    ├── ContactMessageModel.php # Send Gmail`)
 │    │    ├── HomeModel.php    # Homepage model with unified architecture`)
 │    │    ├── NoteModel.php     # Notes, categories, tags, pinned notes`)
 │    │    ├── ProjectModel.php  # Project list, filters, pagination, tech relations`)
@@ -534,3 +538,4 @@ https://myaccount.google.com/apppasswords
   - Speed via caching
   - Clean MVC separation
   - Future scalability (middleware, modules, services)
+````
