@@ -1,9 +1,9 @@
 {
   "greeting_title": "Hi, I'm Yogesh Lilake 👋 from defaultPath",
-  "main_description": "I build modern web and mobile applications with a focus on performance, usability and clean architecture.",
-  "secondary_description": "I enjoy solving problems end-to-end: from design and product thinking to clean, tested code.",
+  "main_description": "I\u2019m a Full Stack Developer & Android Engineer bridging creativity with logic. My mission is to design systems that are fast, scalable, and enjoyable to use.",
+  "secondary_description": "With hands-on experience in PHP, MySQL, JavaScript, Tailwind, and Java, I craft secure and visually engaging web and mobile applications. I also have strong fundamentals in DSA and API development.",
   "cta_text": "Download CV",
-  "cta_link": "assets/cv/Yogesh-CV.pdf",
-  "profile_image": "assets/images/profile.jpg",
+  "cta_link": "downloads/Yogesh_Lilake_Resume.pdf",
+  "profile_image": "profile.jpg",
   "is_active": 1
 }

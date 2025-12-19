@@ -48,7 +48,7 @@ if ($currentRoute === "//" || $currentRoute === "/") {
 
     <!-- LOGO -->
     <a href="<?= HOME_URL ?>" class="flex items-center space-x-2 group">
-      <img src="<?= htmlspecialchars($header['logo_path']) ?>"
+      <img src="<?= logo($header['logo_path']) ?>"
             class="h-9 w-9 rounded-full transition-transform group-hover:rotate-12 duration-300 shadow-md shadow-[<?= htmlspecialchars($header['accent_color']) ?>55]">
       <span class="logo-text gradient-text tracking-wide duration-300">
         <?= htmlspecialchars($header['site_title']) ?>

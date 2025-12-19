@@ -60,17 +60,17 @@ require_once LAYOUT_HEAD_FILE;
         </p>
 
         <?php if (!empty($content["cta_link"])): ?>
-            <a href="<?= htmlspecialchars($content["cta_link"]) ?>"
-               class="inline-block bg-accent hover:bg-red-600 text-darkbg px-8 py-3 rounded-full
+            <button onclick="ajaxDownload('<?= url($content['cta_link'] ?? '') ?>', 'Yogesh_Lilake_Resume.pdf')"
+                class="inline-block bg-accent hover:bg-red-600 text-darkbg px-8 py-3 rounded-full
                       font-semibold transition text-sm sm:text-base">
                 <?= htmlspecialchars($content["cta_text"] ?? "Download CV") ?>
-            </a>
+            </button>
         <?php endif; ?>
 
     </div>
 
     <div class="flex-1 flex justify-center">
-        <img src="<?= htmlspecialchars($content["profile_image"] ?? IMG_URL . "profile.jpg") ?>"
+        <img src="<?= logo($content['profile_image']) ?? IMG_URL . "profile.jpg" ?>"
              alt="<?= SITE_TITLE ?>"
              class="w-52 sm:w-64 md:w-80 aspect-square object-cover rounded-3xl shadow-xl 
              border-4 border-accent/40 hover:scale-105 transition-transform duration-700 ease-out float-glow">

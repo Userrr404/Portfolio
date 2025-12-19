@@ -220,7 +220,7 @@ define('CONTACT_URL', BASE_URL . 'contact.php');
    13. OTHER CONSTANTS
 ---------------------------------------------- */
 define('SITE_TITLE', 'Yogesh Lilake');
-define('SITE_LOGO', IMG_URL . 'logo.png');
+define('SITE_LOGO', 'logo.png');
 define('FAVICON_PATH', IMG_URL . 'favicon.png');
 define('CTA_TEXT', 'Hire Me');
 define('CTA_LINK', '/contact');

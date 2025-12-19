@@ -28,9 +28,11 @@ require_once LAYOUT_HEAD_FILE;
     <!-- Image -->
     <?php if (!empty($project['image_path'])): ?>
         <img
-            src="<?= esc($project['image_path']) ?>"
+            src="<?= asset($project['image_path']) ?>"
             alt="<?= esc($project['title'] ?? 'Project image') ?>"
             class="rounded-xl mb-8 w-full max-h-[420px] object-cover"
+            loading="lazy"
+            onerror="this.onerror=null;this.src='<?= asset('project-placeholder.png') ?>';"
         >
     <?php endif; ?>
 

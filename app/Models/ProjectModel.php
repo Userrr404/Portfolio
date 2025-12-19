@@ -68,8 +68,14 @@ class ProjectModel {
             [
                 "id" => 0,
                 "title"=> "DD Portfolio Website",
+                "slug"=> "personal-portfolio",
+                "short_desc"=> "Modern developer portfolio website",
                 "description" => "Dynamic PHP + MySQL website with caching, controllers, models & animations.",
-                "image_path"=> "assets/img/default-project.jpg",
+                "full_desc"=> "This project demonstrates a full MVC PHP architecture with routing, caching, controllers, models, and clean UI animations.",
+                "image_path"=> "portfolio.png",
+                "cover_image"=> null,
+                "github_url"=> "https://github.com/Yogesh-Lilake/Portfolio",
+                "live_url"=> "https://github.com/Yogesh-Lilake/Portfolio",
                 "project_link"=> "#",
                 "is_featured"=> 1,
                 "sort_order"=> 1,
@@ -78,8 +84,14 @@ class ProjectModel {
             [
                 "id"=> 0,
                 "title"=> "D E-Commerce Backend",
-                "description"=> "Cart, authentication, product management & admin panel.",
-                "image_path"=> "assets/img/default-project.jpg",
+                "slug"=> "footwear-ecommerce",
+                "short_desc"=> "",
+                "description"=> "A full-stack online store built with PHP, MySQL, and Razorpay integration. Features secure checkout, admin dashboard, and product management.",
+                "full_desc"=> "",
+                "image_path"=> "footwear.png",
+                "cover_image"=> null,
+                "github_url"=> null,
+                "live_url"=> null,
                 "project_link"=> "#",
                 "is_featured"=> 1,
                 "sort_order"=> 2,
@@ -135,14 +147,14 @@ class ProjectModel {
             }
 
             if ($tech) {
-                $join = "LEFT JOIN project_tech t ON t.project_id = p.id";
+                $join = "LEFT JOIN project_tech1 t ON t.project_id = p.id";
                 $where .= " AND t.tech_name LIKE :tech";
                 $bind[":tech"] = "%$tech%";
             }
 
             $sql = "
                 SELECT SQL_CALC_FOUND_ROWS p.*
-                FROM projects p
+                FROM projects1 p
                 $join
                 $where
                 GROUP BY p.id
@@ -240,7 +252,7 @@ class ProjectModel {
         /* B. DB */
         try {
             $pdo = DB::getInstance()->pdo();
-            $stmt = $pdo->query("SELECT project_id, tech_name, color_class FROM project_tech ORDER BY id ASC");
+            $stmt = $pdo->query("SELECT project_id, tech_name, color_class FROM project_tech1 ORDER BY id ASC");
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
             $structured = [];
@@ -334,44 +346,74 @@ class ProjectModel {
             [
                 "id" => 0,
                 "title" => "D Portfolio Website",
+                "slug"=> "personal-portfolio",
+                "short_desc"=> "Modern developer portfolio website",
                 "description" => "A modern developer portfolio built with PHP, MySQL, TailwindCSS and enterprise-level caching. Includes dynamic pages, models, controllers, and caching layers.",
-                "image_path" => IMG_URL . "default-project.jpg",
+                "full_desc"=> "This project demonstrates a full MVC PHP architecture with routing, caching, controllers, models, and clean UI animations.",
+                "image_path" => "portfolio.png",
+                "cover_image"=> null,
+                "github_url"=> "https://github.com/Yogesh-Lilake/Portfolio",
+                "live_url"=> "https://github.com/Yogesh-Lilake/Portfolio",
                 "project_link" => "#",
                 "is_featured" => 1,
                 "sort_order" => 1
             ],
             [
                 "id" => 1,
-                "title" => "E-Commerce Backend API",
-                "description" => "REST API with secure authentication, product management, cart system, checkout workflow and order tracking. Built using PHP MVC architecture.",
-                "image_path" => IMG_URL . "default-project.jpg",
+                "title" => "Footwear E-Commerce Website",
+                "slug"=> "footwear-ecommerce",
+                "short_desc"=> "",
+                "description"=> "A full-stack online store built with PHP, MySQL, and TailwindCSS featuring products, cart, checkout, and admin panel.",
+                "full_desc"=> "",
+                "image_path"=> "footwear.png",
+                "cover_image"=> null,
+                "github_url"=> null,
+                "live_url"=> null,
                 "project_link" => "#",
                 "is_featured" => 0,
                 "sort_order" => 2
             ],
             [
                 "id" => 2,
-                "title" => "Analytics Dashboard",
-                "description" => "Interactive dashboard built using PHP + MySQL + JavaScript charts. Includes KPI metrics, daily analytics, and trend visualization.",
-                "image_path" => IMG_URL . "default-project.jpg",
+                "title" => "Android Expense Tracker",
+                "slug"=> "android-expense-tracker",
+                "short_desc"=> "",
+                "description"=> "An Android app to track daily expenses, built using Java, SQLite, and chart visualizations.",
+                "full_desc"=> "",
+                "image_path"=> "expense.png",
+                "cover_image"=> null,
+                "github_url"=> null,
+                "live_url"=> null,
                 "project_link" => "#",
                 "is_featured" => 0,
                 "sort_order" => 3
             ],
             [
                 "id" => 3,
-                "title" => "Task Manager App",
-                "description" => "Powerful task manager with categories, labels, due dates, notifications, and priority levels. Built using clean PHP + MySQL architecture.",
-                "image_path" => IMG_URL . "default-project.jpg",
+                "title" => "Online Quiz Platform",
+                "slug"=> "online-quiz-platform",
+                "short_desc"=> "",
+                "description"=> "An interactive quiz system where users can take timed quizzes and evaluate their scores instantly.",
+                "full_desc"=> "",
+                "image_path"=> "quiz.png",
+                "cover_image"=> null,
+                "github_url"=> null,
+                "live_url"=> null,
                 "project_link" => "#",
                 "is_featured" => 0,
                 "sort_order" => 4
             ],
             [
                 "id" => 4,
-                "title" => "Blog CMS System",
-                "description" => "A custom content management system supporting posts, categories, tags, comments, and admin dashboard. Built with secure MVC structure.",
-                "image_path" => IMG_URL . "default-project.jpg",
+                "title" => "Weather Forecast Web App",
+                "slug"=> "weather-forecast",
+                "short_desc"=> "",
+                "description"=> "Displays real-time weather data fetched using OpenWeather API. Built using PHP + JavaScript.",
+                "full_desc"=> "",
+                "image_path"=> "weather.png",
+                "cover_image"=> null,
+                "github_url"=> null,
+                "live_url"=> null,
                 "project_link" => "#",
                 "is_featured" => 0,
                 "sort_order" => 5
@@ -430,7 +472,7 @@ class ProjectModel {
         $pdo = DB::getInstance()->pdo();
         $stmt = $pdo->prepare("
             SELECT * 
-            FROM projects 
+            FROM projects1 
             WHERE slug = :slug AND is_active = 1 
             LIMIT 1
         ");
@@ -453,6 +495,13 @@ class ProjectModel {
             if (($p['slug'] ?? '') === $slug) {
                 return $p;
             }
+        }
+    }
+
+    // ✅ C. HARD FALLBACK
+    foreach ($this->defaultProjects() as $p) {
+        if (($p['slug'] ?? '') === $slug) {
+            return $p;
         }
     }
 

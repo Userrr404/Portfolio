@@ -44,8 +44,10 @@ require_once LAYOUT_HEAD_FILE;
       <?php foreach ($projects as $p): ?>
         <div class="bg-[#1E293B] rounded-2xl overflow-hidden shadow-lg hover:scale-[1.03] transition-transform duration-500 group">
           <div class="relative aspect-[4/3]">
-            <img src="<?= esc(img_url($p['image_path'])) ?>" alt="<?= esc($p['title']) ?>" 
-                  class="absolute inset-0 w-full h-full object-cover group-hover:opacity-80 transition-opacity">
+            <img src="<?= asset($p['image_path']) ?>" alt="<?= esc($p['title']) ?>" 
+                  class="absolute inset-0 w-full h-full object-cover group-hover:opacity-80 transition-opacity"
+                  loading="lazy"
+                  onerror="this.onerror=null;this.src='<?= asset('project-placeholder.png') ?>';">
             <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
               <a href="<?= BASE_URL ?>projects/<?= esc($p['slug']) ?>"
                   class="bg-accent text-darkbg px-5 py-2 rounded-full font-semibold hover:bg-red-600 transition">

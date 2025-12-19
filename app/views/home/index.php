@@ -102,9 +102,11 @@ require_once LAYOUT_HEAD_FILE;
             <?php foreach ($projects as $project): ?>
                 <div class="bg-[#1E293B] rounded-xl overflow-hidden shadow-lg hover:scale-105 transition">
 
-                    <img src="<?= field($project, 'image_path') ?>" 
+                    <img src="<?= asset($project['image_path']) ?>" 
                          alt="<?= field($project, 'title') ?>" 
-                         class="aspect-video w-full object-cover">
+                         class="aspect-video w-full object-cover"
+                         loading="lazy"
+                         onerror="this.onerror=null;this.src='<?= asset('project-placeholder.png') ?>';">
 
                     <div class="p-6">
                         <h3 class="text-xl font-semibold mb-2"><?= field($project, 'title') ?></h3>

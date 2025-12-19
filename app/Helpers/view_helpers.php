@@ -50,3 +50,13 @@ if (!function_exists('safeStr')) {
     }
 }
 
+function logo(string $path): string 
+{
+    return IMG_URL . $path;
+}
+
+function asset(string $path): string
+{
+    return PROJECT_URL . $path;
+}
+
