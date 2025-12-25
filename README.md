@@ -5,6 +5,7 @@ A modern, scalable, and production-ready **Portfolio Website** built with
 
 # This project is built with a zero-crash, self-healing backend architecture to always stay online:
 
+- Safe Mode Architecture (`Enterprise Fail-Safe UX Layer`)
 - Single Entry-Point Architecture (`All HTTP traffic now goes through only: "public/index.php" `)
 - Fully custom Router (`GET/POST/ANY`)
 - Single-entry front controller architecture
@@ -37,6 +38,28 @@ Every page & model follows:
 This guarantees **no empty UI**, **zero fatal errors**, and **production reliability**.
 
 ---
+
+### 🔐 Safe Mode Architecture (Enterprise Fail-Safe UX Layer)
+
+This project implements a Safe Mode UI + Controller Architecture, inspired by real-world production systems (Google, Stripe, AWS dashboards).
+
+**Safe Mode ensures that even if critical backend failures occur, the application:**
+
+  1. **Never crashes**
+  2. **Never exposes errors to users**
+  3. **Never shows broken or misleading UI**
+  4. **Always preserves navigation & trust**
+
+**Instead of crashing, the system:**
+  - Normal Mode  → Full UI + Interactions
+  - Safe Mode    → Read-only + Minimal + Trusted UI
+
+**Key Guarantees**
+
+  ❌ No fatal error reaches the browser
+  ❌ No partial or corrupt data is cached
+  ✅ Errors are logged internally
+  ✅ User always sees a valid page
 
 ## .htaccess handles rewriting:
 
