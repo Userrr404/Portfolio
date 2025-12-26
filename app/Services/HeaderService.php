@@ -9,8 +9,9 @@ class HeaderData {
     private string $cacheKeyHeader = "header_settings";
     private string $cacheKeyNav    = "header_navigation";
 
-    private string $defaultHeaderPath;
-    private string $defaultNavPath;
+    // config paths may legitimately not exist
+    private ?string $defaultHeaderPath = null;
+    private ?string $defaultNavPath    = null;
 
     private array $requiredKeys = [
         "site_title",
@@ -22,8 +23,9 @@ class HeaderData {
 
     public function __construct($pdo = null)
     {
-        $this->defaultHeaderPath = HEADER_DEFAULT_FILE;
-        $this->defaultNavPath    = NAV_DEFAULT_FILE;
+        // CONFIG-SAFE (no fatal error if missing)
+        $this->defaultHeaderPath = safe_path('HEADER_DEFAULT_FILE');
+        $this->defaultNavPath    = safe_path('NAV_DEFAULT_FILE');
     }
 
     /* ============================================================
@@ -55,7 +57,7 @@ class HeaderData {
         }
 
         // 3. Default JSON
-        if (file_exists($this->defaultHeaderPath)) {
+        if ($this->defaultHeaderPath && file_exists($this->defaultHeaderPath)) {
             $json = json_decode(file_get_contents($this->defaultHeaderPath), true);
             if (!empty($json)) return $this->normalize($json);
         }
@@ -94,7 +96,7 @@ class HeaderData {
         }
 
         // 3. Default JSON
-        if (file_exists($this->defaultNavPath)) {
+        if ($this->defaultNavPath && file_exists($this->defaultNavPath)) {
             $json = json_decode(file_get_contents($this->defaultNavPath), true);
             if (!empty($json)) return $json;
         }

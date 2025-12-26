@@ -11,9 +11,10 @@ class FooterData
     private string $cacheKeyLinks  = "footer_quick_links";
     private string $cacheKeySocial = "footer_social_links";
 
-    private string $defaultFooterPath;
-    private string $defaultLinksPath;
-    private string $defaultSocialPath;
+    // config paths may legitimately not exist
+    private ?string $defaultFooterPath = null;
+    private ?string $defaultLinksPath  = null;
+    private ?string $defaultSocialPath = null;
 
     // REQUIRED keys to prevent undefined index errors
     private array $requiredFooterKeys = [
@@ -25,10 +26,10 @@ class FooterData
 
     public function __construct()
     {
-        // Set default JSON paths
-        $this->defaultFooterPath = FOOTER_DEFAULT_FILE;
-        $this->defaultLinksPath  = FOOTER_LINKS_DEFAULT_FILE;
-        $this->defaultSocialPath = FOOTER_SOCIAL_DEFAULT_FILE;
+        // CONFIG-SAFE (no fatal error if missing)
+        $this->defaultFooterPath = safe_path('FOOTER_DEFAULT_FILE');
+        $this->defaultLinksPath  = safe_path('FOOTER_LINKS_DEFAULT_FILE');
+        $this->defaultSocialPath = safe_path('FOOTER_SOCIAL_DEFAULT_FILE');
     }
 
     /* ============================================================
@@ -60,8 +61,7 @@ class FooterData
             return $this->normalizeFooter($db);
         }
 
-        // 3. JSON fallback
-        if (file_exists($this->defaultFooterPath)) {
+        if ($this->defaultFooterPath && file_exists($this->defaultFooterPath)) {
             $json = json_decode(file_get_contents($this->defaultFooterPath), true);
             if (!empty($json)) return $this->normalizeFooter($json);
         }
@@ -99,8 +99,7 @@ class FooterData
             return $db;
         }
 
-        // 3. JSON
-        if (file_exists($this->defaultLinksPath)) {
+        if ($this->defaultLinksPath && file_exists($this->defaultLinksPath)) {
             $json = json_decode(file_get_contents($this->defaultLinksPath), true);
             if (!empty($json)) return $json;
         }
@@ -144,8 +143,7 @@ class FooterData
             return $db;
         }
 
-        // 3. JSON
-        if (file_exists($this->defaultSocialPath)) {
+        if ($this->defaultSocialPath && file_exists($this->defaultSocialPath)) {
             $json = json_decode(file_get_contents($this->defaultSocialPath), true);
             if (!empty($json)) return $json;
         }

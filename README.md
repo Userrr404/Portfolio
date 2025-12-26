@@ -5,7 +5,7 @@ A modern, scalable, and production-ready **Portfolio Website** built with
 
 # This project is built with a zero-crash, self-healing backend architecture to always stay online:
 
-- Safe Mode Architecture (`Enterprise Fail-Safe UX Layer`)
+- Safe Mode Architecture (`Config-Path Safety Layer, Enterprise Fail-Safe UX Layer`)
 - Single Entry-Point Architecture (`All HTTP traffic now goes through only: "public/index.php" `)
 - Fully custom Router (`GET/POST/ANY`)
 - Single-entry front controller architecture
@@ -39,6 +39,32 @@ This guarantees **no empty UI**, **zero fatal errors**, and **production reliabi
 
 ---
 
+### 🧱 Config-Path Safety Layer (Zero-Crash Guarantee)
+
+This project introduces a **Config-Path Safety Layer** to prevent **fatal runtime crashes**
+caused by missing or misconfigured path constants.
+
+In real production environments, configuration drift can occur due to:
+- Partial deployments
+- Environment mismatch (localhost vs live)
+- Missing JSON fallback files
+- Disabled feature modules
+- Refactoring or incremental rollout
+
+### ❌ Problem (Traditional PHP Apps)
+In most PHP applications, directly accessing undefined constants like:
+
+```php
+HEADER_DEFAULT_FILE
+FOOTER_DEFAULT_FILE
+```
+
+results in:
+  - Fatal errors
+  - White screen of death
+  - Broken production pages
+This violates enterprise uptime guarantees.
+
 ### 🔐 Safe Mode Architecture (Enterprise Fail-Safe UX Layer)
 
 This project implements a Safe Mode UI + Controller Architecture, inspired by real-world production systems (Google, Stripe, AWS dashboards).
@@ -60,6 +86,8 @@ This project implements a Safe Mode UI + Controller Architecture, inspired by re
   ❌ No partial or corrupt data is cached
   ✅ Errors are logged internally
   ✅ User always sees a valid page
+
+---
 
 ## .htaccess handles rewriting:
 

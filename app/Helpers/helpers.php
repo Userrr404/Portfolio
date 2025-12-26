@@ -1,5 +1,17 @@
 <?php
 
+// This is config fallback
+function safe_path(string $const, ?string $fallback = null): ?string
+{
+    if (defined($const)) {
+        return constant($const);
+    }
+
+    app_log("Missing path constant: {$const}", "warning");
+
+    return $fallback;
+}
+
 function safe_fetch(PDOStatement|false $stmt)
 {
     if (!$stmt) return null;
