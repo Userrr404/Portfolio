@@ -8,11 +8,12 @@ use Throwable;
 
 class ProjectModel {
     // private int $defaultTTL = 3600; // 1 hour cache
+    private ?string $defaultPath = null;
 
     public function __construct()
     {
         // require_once CACHESERVICE_FILE;
-        
+        $this->defaultPath = safe_path('HOME_PROJECTS_DEFAULT_FILE');
     }
 
     /* ============================================================
@@ -44,14 +45,14 @@ class ProjectModel {
             }
 
         } catch (Throwable $e) {
-            app_log("ProjectModel getFeatured ERROR: " . $e->getMessage(), "error");
+            app_log("ProjectModel@getFeatured DB ERROR: " . $e->getMessage(), "error");
         }
 
         /** ----------------------------------------------------
         * C. TRY DEFAULT JSON FILE
         * ----------------------------------------------------*/
-        if (file_exists(HOME_PROJECTS_DEFAULT_FILE)) {
-            $json = json_decode(file_get_contents(HOME_PROJECTS_DEFAULT_FILE), true);
+        if ($this->defaultPath && file_exists($this->defaultPath)) {
+            $json = json_decode(file_get_contents($this->defaultPath), true);
             if (!empty($json)) {
                 return [
                     "source" => "json",
@@ -155,14 +156,14 @@ class ProjectModel {
             }
 
             if ($tech) {
-                $join = "LEFT JOIN project_tech1 t ON t.project_id = p.id";
+                $join = "LEFT JOIN project_tech t ON t.project_id = p.id";
                 $where .= " AND t.tech_name LIKE :tech";
                 $bind[":tech"] = "%$tech%";
             }
 
             $sql = "
                 SELECT SQL_CALC_FOUND_ROWS p.*
-                FROM projects1 p
+                FROM projects p
                 $join
                 $where
                 GROUP BY p.id
@@ -205,9 +206,9 @@ class ProjectModel {
         /* ----------------------------
          * C. Try default JSON file (paginated)
          * ---------------------------- */
-        $jsonPath = PROJECTS_DEFAULT_FILE;
-        if (file_exists($jsonPath)) {
-            $all = json_decode(file_get_contents($jsonPath), true);
+        $jsonFile = safe_path('PROJECTS_DEFAULT_FILE');
+        if ($jsonFile && file_exists($jsonFile)) {
+            $all = json_decode(file_get_contents($jsonFile), true);
             if (!empty($all) && is_array($all)) {
                 // paginate JSON array
                 $filtered = $all;
@@ -260,7 +261,7 @@ class ProjectModel {
         /* B. DB */
         try {
             $pdo = DB::getInstance()->pdo();
-            $stmt = $pdo->query("SELECT project_id, tech_name, color_class FROM project_tech1 ORDER BY id ASC");
+            $stmt = $pdo->query("SELECT project_id, tech_name, color_class FROM project_tech ORDER BY id ASC");
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
             $structured = [];
@@ -277,9 +278,9 @@ class ProjectModel {
         }
 
         /* C. default JSON */
-        $jsonPath = PROJECTS_TECHLIST_DEFAULT_FILE;
-        if (file_exists($jsonPath)) {
-            $json = json_decode(file_get_contents($jsonPath), true);
+        $jsonFile = safe_path('PROJECTS_TECHLIST_DEFAULT_FILE');
+        if ($jsonFile && file_exists($jsonFile)) {
+            $json = json_decode(file_get_contents($jsonFile), true);
             if (!empty($json) && is_array($json)) {
                 // mark default and return (do not cache)
                 $json['is_default'] = true;
@@ -480,7 +481,7 @@ class ProjectModel {
         $pdo = DB::getInstance()->pdo();
         $stmt = $pdo->prepare("
             SELECT * 
-            FROM projects1 
+            FROM projects 
             WHERE slug = :slug AND is_active = 1 
             LIMIT 1
         ");
@@ -496,9 +497,9 @@ class ProjectModel {
     }
 
     // JSON fallback
-    $jsonPath = PROJECTS_DEFAULT_FILE;
-    if (file_exists($jsonPath)) {
-        $json = json_decode(file_get_contents($jsonPath), true);
+    $jsonFile = safe_path('PROJECTS_DEFAULT_FILE');
+    if ($jsonFile && file_exists($jsonFile)) {
+        $json = json_decode(file_get_contents($jsonFile), true);
         foreach ($json as $p) {
             if (($p['slug'] ?? '') === $slug) {
                 return $p;

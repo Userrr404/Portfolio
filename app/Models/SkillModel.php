@@ -9,8 +9,14 @@ use Throwable;
 class SkillModel {
 
     private string $cacheKey = "skills";
-    private string $defaultJson = HOME_SKILLS_DEFAULT_FILE;
+    private ?string $defaultJson = null;
 
+    public function __construct()
+    {
+        // CONFIG-SAFE resolution happens at runtime
+        $this->defaultJson = safe_path('HOME_SKILLS_DEFAULT_FILE');
+    }    
+    
     public function all()
     {
         /** ----------------------------------------------------
@@ -43,13 +49,13 @@ class SkillModel {
             }
 
         } catch (Throwable $e) {
-            app_log("SkillModel DB error: " . $e->getMessage(), "error");
+            app_log("SkillModel@all DB error: " . $e->getMessage(), "error");
         }
 
         /** ----------------------------------------------------
          * C. TRY DEFAULT JSON FILE
          * ----------------------------------------------------*/
-        if (file_exists($this->defaultJson)) {
+        if ($this->defaultJson && file_exists($this->defaultJson)) {
             $json = json_decode(file_get_contents($this->defaultJson), true);
 
             if (!empty($json) && is_array($json)) {

@@ -25,12 +25,12 @@ class AboutModel {
     private string $cacheKey = "about";
 
     /** Path to default JSON files (residing in /resources/defaults/about/) */
-    private string $defaultPath;
+    private ?string $defaultPath = null;
     // private int $defaultTTL = 3600; // seconds for section caches (tunable)
 
     public function __construct() {
         require_once CACHESERVICE_FILE;
-
+        $this->defaultPath = safe_path('HOME_ABOUT_DEFAULT_FILE');
     }
 
     /**
@@ -58,16 +58,14 @@ class AboutModel {
             }
 
         } catch (Throwable $e) {
-            app_log("AboutModel@get error: " . $e->getMessage(), "error");
+            app_log("AboutModel@get DB error: " . $e->getMessage(), "error");
         }
 
         /** ----------------------------------------------------
         * C. TRY DEFAULT JSON FILE
         * ----------------------------------------------------*/
-        $jsonFile = HOME_ABOUT_DEFAULT_FILE;
-
-        if (file_exists($jsonFile)) {
-            $json = json_decode(file_get_contents($jsonFile), true);
+        if ($this->defaultPath && file_exists($this->defaultPath)) {
+            $json = json_decode(file_get_contents($this->defaultPath), true);
             if (!empty($json) && is_array($json)) {
                 return $json;
             }
@@ -91,11 +89,11 @@ class AboutModel {
      * C. Try default JSON file (if exists)
      * D. Hard-coded fallback defaults
      *
-     * @param string    $cacheKey   Cache identifier
-     * @param string    $table       Database table name
-     * @param string    $jsonFile    Default JSON file name
-     * @param callable  $fallbackFn  Function returning default PHP data
-     * @param bool      $single      If true → LIMIT 1, else → fetchAll()
+     * @param string    $cacheKey           Cache identifier
+     * @param string    $table              Database table name
+     * @param string    $jsonPathConst      Default JSON file path
+     * @param callable  $fallbackFn         Function returning default PHP data
+     * @param bool      $single             If true → LIMIT 1, else → fetchAll()
     */
     private function loadUnified(string $cacheKey, string $table, string $jsonPathConst, callable $fallbackFn, bool $single = false){
         
@@ -137,9 +135,9 @@ class AboutModel {
         /** ----------------------------------------------------
          * C. Try loading JSON defaults
          * ---------------------------------------------------- */
-        $jsonFile = constant($jsonPathConst);
+        $jsonFile = safe_path($jsonPathConst);
 
-        if (file_exists($jsonFile)) {
+        if ($jsonFile && file_exists($jsonFile)) {
             $json = json_decode(file_get_contents($jsonFile), true);
 
             if (!empty($json)) {

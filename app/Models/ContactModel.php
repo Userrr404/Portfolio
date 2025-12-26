@@ -9,12 +9,12 @@ use Throwable;
 class ContactModel {
 
     private string $cacheKey = "contact";
-    private string $defaultHomeJson = HOME_CONTACT_DEFAULT_FILE;
-    private string $defaultPath;
+    private ?string $defaultHomeJson = null;
+    private ?string $defaultPath = null;
 
     public function __construct() {
         require_once CACHESERVICE_FILE;
-
+        $this->defaultHomeJson = safe_path('HOME_CONTACT_DEFAULT_FILE');
     }
 
     public function get()
@@ -48,13 +48,13 @@ class ContactModel {
             }
 
         } catch (Throwable $e) {
-            app_log("ContactModel DB error: " . $e->getMessage(), "error");
+            app_log("ContactModel@get DB error: " . $e->getMessage(), "error");
         }
 
         /** ----------------------------------------------------
          * C. TRY DEFAULT JSON FILE
          * ----------------------------------------------------*/
-        if (file_exists($this->defaultHomeJson)) {
+        if ($this->defaultHomeJson && file_exists($this->defaultHomeJson)) {
             $json = json_decode(file_get_contents($this->defaultHomeJson), true);
             if (!empty($json) && is_array($json)) {
                 return $json;
@@ -111,9 +111,9 @@ class ContactModel {
         }
 
         // C. Try JSON defaults (wrapped)
-        $jsonFile = constant($jsonPathConst);
+        $jsonFile = safe_path($jsonPathConst);
 
-        if (file_exists($jsonFile)) {
+        if ($jsonFile && file_exists($jsonFile)) {
             $json = json_decode(file_get_contents($jsonFile), true);
             if (!empty($json) && is_array($json)) {
                 return [

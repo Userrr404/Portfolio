@@ -8,14 +8,14 @@ use Throwable;
 class HomeModel
 {
     private string $cacheKey = "home";
-    private string $defaultPath;
+    private ?string $defaultPath = null;  // This path may legitimately not exist
     // private int $defaultTTL = 3600; // 1 hour (tunable)
 
     public function __construct()
     {
 
         // Path to /resources/defaults/home.json
-        $this->defaultPath = HOME_DEFAULT_FILE;
+        $this->defaultPath = safe_path('HOME_DEFAULT_FILE');
     }
 
 
@@ -47,7 +47,7 @@ class HomeModel
         } catch (Throwable $e) {
 
             // Never crash the home page — log and fallback
-            app_log("HomeModel@get error: " . $e->getMessage(), "error");
+            app_log("HomeModel@get DB error: " . $e->getMessage(), "error");
         }
 
         return [];
@@ -69,7 +69,7 @@ class HomeModel
         }
 
         /** C. Try default JSON */
-        if (file_exists($this->defaultPath)) {
+        if ($this->defaultPath && file_exists($this->defaultPath)) {
             $json = json_decode(file_get_contents($this->defaultPath), true);
             if (!empty($json)) return $json;
         }
