@@ -1,79 +1,95 @@
 <?php
-/**
- * FOOTER COMPONENT
- * Safe-mode aware, zero-crash
- */
+require_once FOOTERSERVICE_FILE; ;
 
-$safeMode = $data['safe_mode'] ?? false;
+use app\core\DB;
+use app\Services\FooterData;
 
-$footer = [];
-$footer_links = [];
-$social_links = [];
+$db = DB::getInstance()->pdo();
 
-if (!$safeMode) {
-    try {
-        require_once FOOTERSERVICE_FILE;
+$data          = (new FooterData($db))->get();
+$footer        = $data['footer'];
+$footer_links  = $data['links'];
+$social_links  = $data['social'];
 
-        /*
-        use app\core\DB;
-        use app\Services\FooterData;
+$year = date("Y");
 
-        $db = DB::getInstance()->pdo();
+// Footer asset files
+$footer_css = [FOOTER_CSS];
+$footer_js  = [FOOTER_JS];
 
-        $data = (new FooterData($db))->get();
-        */
-        // ✅ Use fully qualified class names (NO use statements in views)
-        $db = \app\Core\DB::getInstance()->pdo();
-        $footerData = (new \app\Services\FooterData($db))->get();
+// Detect project base URL (ex: /Portfolio/public)
+$BASE_URL = dirname($_SERVER['SCRIPT_NAME']);
+if ($BASE_URL === "/") $BASE_URL = "";
 
-        $footer       = $footerData['footer'] ?? [];
-        $footer_links = $footerData['links'] ?? [];
-        $social_links = $footerData['social'] ?? [];
+// Detect FULL request URI (ex: /Portfolio/public/about)
+$currentUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-    } catch (Throwable $e) {
-        app_log("Footer fallback triggered: " . $e->getMessage(), "error");
-        $safeMode = true;
-    }
+// Remove base path from URI → gives clean route (/about)
+if ($BASE_URL !== "" && strpos($currentUri, $BASE_URL) === 0) {
+    $currentUri = substr($currentUri, strlen($BASE_URL));
 }
-
-if ($safeMode):
 ?>
-<footer class="mt-24 py-12 text-center text-gray-400 border-t border-[#ffffff08]">
-    <p>© <?= date('Y') ?> Yogesh Lilake</p>
-    <p class="mt-2 text-sm">Some features are temporarily unavailable.</p>
-</footer>
-<?php return; endif; ?>
 
 <!-- FOOTER CSS -->
-<link rel="stylesheet" href="<?= FOOTER_CSS ?>">
+<?php foreach ($footer_css as $css): ?>
+    <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>">
+<?php endforeach; ?>
 
 <footer class="text-color font-medium mt-24 border-t border-[#ffffff08] relative">
 
-    <div class="relative z-10 max-w-7xl mx-auto px-6 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+    <!-- Background Elements -->
+    <div class="footer-bg"></div>
+    <div class="orb"></div><div class="orb"></div><div class="orb"></div>
+    <div class="footer-glow"></div>
 
-        <div>
-            <h2 class="text-white text-2xl font-bold">
-                <?= htmlspecialchars($footer['brand_name'] ?? '') ?>
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 
+                grid gap-10 sm:grid-cols-2 lg:grid-cols-3 place-items-start">
+
+        <!-- BRAND -->
+        <div class="space-y-3 animate-[fade-up_0.6s_ease-out]">
+            <h2 class="text-white text-2xl sm:text-3xl font-bold tracking-wide brand-hover">
+                <?= htmlspecialchars($footer['brand_name']) ?>
             </h2>
-            <p class="text-gray-400 mt-3">
-                <?= htmlspecialchars($footer['footer_description'] ?? '') ?>
+            <p class="text-gray-400 text-sm sm:text-base leading-relaxed">
+                <?= htmlspecialchars($footer['footer_description']) ?>
             </p>
         </div>
 
-        <div>
-            <h3 class="text-white font-semibold mb-3">Quick Links</h3>
-            <?php foreach ($footer_links as $link): ?>
-                <a href="<?= url($link['url']) ?>" class="block hover:text-accent">
-                    <?= htmlspecialchars($link['label']) ?>
-                </a>
-            <?php endforeach; ?>
+        <!-- QUICK LINKS -->
+        <div class="space-y-2 animate-[fade-up_0.8s_ease-out]">
+            <h3 class="text-white font-semibold mb-3 text-lg border-b border-accent/40 w-fit pb-1">
+                Quick Links
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-1 gap-x-6 sm:gap-x-0 gap-y-1">
+                <?php foreach ($footer_links as $link): ?>
+                    <?php
+                        // Normalize DB URL (ex: "about" → "/about")
+                        $linkUrl = "/" . trim($link['url'], "/");
+
+                        // Final clickable URL with base path
+                        $finalUrl = $BASE_URL . $linkUrl;
+                    ?>
+                    <a href="<?= $finalUrl ?>"
+                       class="hover:text-accent transition-colors duration-300">
+                        <?= htmlspecialchars($link['label']) ?>
+                    </a>            
+                <?php endforeach; ?>
+            </div>
         </div>
 
-        <div>
-            <h3 class="text-white font-semibold mb-3">Connect</h3>
-            <div class="flex gap-4">
+        <!-- SOCIAL LINKS -->
+        <div class="animate-[fade-up_1s_ease-out]">
+            <h3 class="text-white font-semibold mb-3 text-lg border-b border-accent/40 w-fit pb-1">
+                Connect
+            </h3>
+
+            <div class="flex flex-wrap gap-5 mt-3">
                 <?php foreach ($social_links as $s): ?>
-                    <a href="<?= htmlspecialchars($s['url']) ?>" target="_blank">
+                    <a href="<?= htmlspecialchars($s['url']) ?>" 
+                       target="_blank"
+                       class="text-gray-400 hover:text-accent text-2xl sm:text-xl 
+                              social-icon transition-all duration-300 transform hover:scale-110"
+                       aria-label="<?= htmlspecialchars($s['platform']) ?>">
                         <i class="fab <?= htmlspecialchars($s['icon_class']) ?>"></i>
                     </a>
                 <?php endforeach; ?>
@@ -82,9 +98,27 @@ if ($safeMode):
 
     </div>
 
-    <div class="text-center text-gray-500 py-6 border-t border-[#222]">
-        © <?= date('Y') ?> <?= htmlspecialchars($footer['developer_name'] ?? '') ?>
+    <div class="border-t border-[#222] relative z-10"></div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 
+                flex flex-col md:flex-row justify-between items-center text-sm 
+                sm:text-base text-gray-400 text-center gap-2">
+
+        <p class="animate-[fade-up_1.2s_ease-out]">
+            © <?= $year ?> <?= htmlspecialchars($footer['brand_name']) ?>. All Rights Reserved.
+        </p>
+
+        <p class="animate-[fade-up_1.4s_ease-out]">
+            Designed & Developed by 
+            <span class="name-glow text-accent">
+                <?= htmlspecialchars($footer['developer_name']) ?>
+            </span>.
+        </p>
     </div>
+
 </footer>
 
-<script src="<?= FOOTER_JS ?>"></script>
+<!-- FOOTER JS -->
+<?php foreach ($footer_js as $js): ?>
+    <script src="<?= htmlspecialchars($js) ?>"></script>
+<?php endforeach; ?>
