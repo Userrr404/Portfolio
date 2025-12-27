@@ -2,49 +2,65 @@
   {
     "title": "from defaultpath API Security Checklist",
     "description": "Secure your REST APIs using JWTs, input validation, rate limiting, CORS rules, and proper error handling.",
-    "slug": "web",
-    "link": "#"
+    "slug": "api-security-checklist",
+    "category_name": "Web Development",
+    "category_slug": "web",
+    "created_at": "2025-01-01"
   },
   {
     "title": "React Performance Tips",
     "description": "Memoization, code-splitting, and lazy loading to boost React performance in production apps.",
-    "slug": "web",
-    "link": "#"
+    "slug": "react-performance-tips",
+    "category_name": "Web Development",
+    "category_slug": "web",
+    "created_at": "2025-01-01"
   },
   {
     "title": "Binary Search Template",
     "description": "Master iterative and recursive binary search patterns commonly used in DSA.",
-    "slug": "ds",
-    "link": "#"
+    "slug": "binary-search-template",
+    "category_name": "Data Structures",
+    "category_slug": "ds",
+    "created_at": "2025-01-01"
   },
   {
     "title": "JS Debounce vs Throttle",
     "description": "Control frequent browser events to improve UX—key patterns every JS developer must know.",
-    "slug": "web",
-    "link": "#"
+    "slug": "debounce-vs-throttle",
+    "category_name": "Web Development",
+    "category_slug": "web",
+    "created_at": "2025-01-01"
   },
   {
     "title": "Microservices Patterns",
     "description": "Event-driven architecture, API gateways, and communication patterns for distributed systems.",
-    "slug": "system",
-    "link": "#"
+    "slug": "microservices-patterns",
+    "category_name": "System Design",
+    "category_slug": "system",
+    "created_at": "2025-01-01"
   },
   {
     "title": "Clean Code Principles",
     "description": "Write expressive, scalable, maintainable code using SRP, DRY, and refactoring techniques.",
-    "slug": "mindset",
-    "link": "#"
+    "slug": "clean-code-principles",
+    "category_name": "Mindset",
+    "category_slug": "mindset",
+    "created_at": "2025-01-01"
   },
   {
     "title": "SQL Indexing Tips",
     "description": "Optimize heavy database queries using proper indexing, EXPLAIN plans, and avoiding full scans.",
-    "slug": "web",
-    "link": "#"
+    "slug": "sql-indexing-tips",
+    "category_name": "Web Development",
+    "category_slug": "web",
+    "created_at": "2025-01-01"
   },
   {
     "title": "Dynamic Programming Patterns",
     "description": "Master tabulation, memoization, and recurrence breakdown for solving DP problems.",
-    "slug": "ds",
-    "link": "#"
+    "slug": "dynamic-programming-patterns",
+    "category_name": "Data Structures",
+    "category_slug": "ds",
+    "created_at": "2025-01-01"
   }
 ]

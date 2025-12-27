@@ -28,10 +28,11 @@ class NotesController extends Controller
 
             // 2. Fetch DB data (model handles fallback)
             $data = [
-                "notes"        => $this->safeLoad(fn() => $this->notes->getAllNotes()),
-                "categories"   => $this->safeLoad(fn() => $this->notes->getCategories()),
-                "tags"         => $this->safeLoad(fn() => $this->notes->getTags()),
-                "pinned_notes" => $this->safeLoad(fn() => $this->notes->getPinnedNotes()),
+                "safe_mode"    => false,
+                "notes"        => $this->safeLoad(fn() => $this->notes->getAllNotes(), "notes"),
+                "categories"   => $this->safeLoad(fn() => $this->notes->getCategories(), "categories"),
+                "tags"         => $this->safeLoad(fn() => $this->notes->getTags(), "tags"),
+                "pinned_notes" => $this->safeLoad(fn() => $this->notes->getPinnedNotes(), "pinned_notes"),
             ];
 
             // 3. Only store REAL DB data — not defaults
@@ -43,14 +44,14 @@ class NotesController extends Controller
 
         } catch (Throwable $e) {
 
-            app_log("SAFE MODE ACTIVITED — NotesController@index", "critical");
+            app_log("SAFE MODE ACTIVITED — NotesController@index", "critical" . $e->getMessage());
 
             return $this->view("pages/notes", [
                 "safe_mode"     => true,
-                "notes"         => ["data" => []],
-                "categories"    => ["data" => []],
-                "tags"          => ["data" => []],
-                "pinned_notes"  => ["data" => []],
+                "notes"         => ["from_db" => false, "data" => []],
+                "categories"    => ["from_db" => false, "data" => []],
+                "tags"          => ["from_db" => false, "data" => []],
+                "pinned_notes"  => ["from_db" => false, "data" => []],
             ]);
         }
     }
@@ -58,14 +59,14 @@ class NotesController extends Controller
     /* ============================================================
      * safeLoad(): EXACT behaviour like AboutController
      * ============================================================ */
-    private function safeLoad(callable $fn): array
+    private function safeLoad(callable $fn, string $label): array
     {
         try {
             $data = $fn();
 
             // Null, string, bool = invalid
             if (!is_array($data)) {
-                return ["from_db" => false, "data" => []];
+                return ["from_db" => false, "data" => $this->notes->fallback($label)];
             }
 
             // DB real rows contain ID
@@ -84,11 +85,11 @@ class NotesController extends Controller
             }
 
             // Empty array → fallback mode
-            return ["from_db" => false, "data" => []];
+            return ["from_db" => false, "data" => $this->notes->fallback($label)];
 
         } catch (Throwable $e) {
-            app_log("NotesController safeLoad failed: " . $e->getMessage(), "warning");
-            return ["from_db" => false, "data" => []];
+            app_log("NotesController safeLoad failed: {$label}" . $e->getMessage(), "warning");
+            return ["from_db" => false, "data" => $this->notes->fallback($label)];
         }
     }
 
@@ -100,7 +101,7 @@ class NotesController extends Controller
                 return false; // If any section NOT DB → do not cache
             }
         }
-        return false;
+        return true;
     }
 
     public function show(string $slug)

@@ -14,9 +14,20 @@ class NoteModel
     private string $cacheKeyTags       = "note_tags";
     private string $cacheKeyPinned     = "note_pinned";
 
+    private ?string $notesDefaultPath      = null;
+    private ?string $categoriesDefaultPath = null;
+    private ?string $tagsDefaultPath        = null;
+    private ?string $pinnedDefaultPath      = null;
+
     public function __construct()
     {
         require_once CACHESERVICE_FILE;
+
+        // CONFIG-SAFE path resolution
+        $this->notesDefaultPath      = safe_path('NOTES_DEFAULT_FILE');
+        $this->categoriesDefaultPath = safe_path('NOTES_CATEGORIES_DEFAULT_FILE');
+        $this->tagsDefaultPath       = safe_path('NOTES_TAGS_DEFAULT_FILE');
+        $this->pinnedDefaultPath     = safe_path('NOTES_PINNED_DEFAULT_FILE');
     }
 
 
@@ -59,8 +70,8 @@ class NoteModel
         }
 
         // C. Try default JSON
-        if (file_exists(NOTES_DEFAULT_FILE)) {
-            $json = json_decode(file_get_contents(NOTES_DEFAULT_FILE), true);
+        if ($this->notesDefaultPath && file_exists($this->notesDefaultPath)) {
+            $json = json_decode(file_get_contents($this->notesDefaultPath), true);
             if (!empty($json)) return $json;
         }
 
@@ -73,11 +84,14 @@ class NoteModel
     {
         return [
             [
-                "is_default"   => true,
-                "title"        => "Welcome Note",
-                "description"  => "Your notes page is ready! Add notes from the admin.",
-                "slug"         => "general",
-                "link"         => "#"
+                "is_default"     => true,
+                "id"             => 0,
+                "title"          => "Welcome Note",
+                "slug"           => "welcome-note",
+                "description"    => "Your notes page is ready! Add notes from the admin panel.",
+                "category_name"  => "General",
+                "category_slug"  => "general",
+                "created_at"     => date('Y-m-d'),
             ]
         ];
     }
@@ -110,8 +124,8 @@ class NoteModel
         }
 
         // C. JSON defaults
-        if (file_exists(NOTES_CATEGORIES_DEFAULT_FILE)) {
-            $json = json_decode(file_get_contents(NOTES_CATEGORIES_DEFAULT_FILE), true);
+        if ($this->categoriesDefaultPath && file_exists($this->categoriesDefaultPath)) {
+            $json = json_decode(file_get_contents($this->categoriesDefaultPath), true);
             if (!empty($json)) return $json;
         }
 
@@ -159,8 +173,8 @@ class NoteModel
         }
 
         // C. Try default JSON
-        if (file_exists(NOTES_TAGS_DEFAULT_FILE)) {
-            $json = json_decode(file_get_contents(NOTES_TAGS_DEFAULT_FILE), true);
+        if ($this->tagsDefaultPath && file_exists($this->tagsDefaultPath)) {
+            $json = json_decode(file_get_contents($this->tagsDefaultPath), true);
             if (!empty($json)) return $json;
         }
 
@@ -216,14 +230,43 @@ class NoteModel
         }
 
         // C. Try default JSON
-        if (file_exists(NOTES_PINNED_DEFAULT_FILE)) {
-            $json = json_decode(file_get_contents(NOTES_PINNED_DEFAULT_FILE), true);
+        if ($this->pinnedDefaultPath && file_exists($this->pinnedDefaultPath)) {
+            $json = json_decode(file_get_contents($this->pinnedDefaultPath), true);
             if (!empty($json)) return $json;
         }
 
         // D. fallback
-        return [];
+        return $this->defaultPinnedNotes();
     }
+
+    private function defaultPinnedNotes(): array
+    {
+        return [
+            [
+                "is_default"      => true,
+                "id"              => 0,
+                "title"           => "Welcome to Notes",
+                "slug"            => "welcome-note",
+                "description"     => "This is your notes system. Once you add pinned notes from the admin panel, they will appear here.",
+                "category_name"   => "General",
+                "category_slug"   => "general",
+                "created_at"      => date('Y-m-d'),
+            ]
+        ];
+    }
+
+
+    public function fallback(string $type): array
+    {
+        return match ($type) {
+            'notes'        => $this->defaultNotes(),
+            'categories'   => $this->defaultCategories(),
+            'tags'         => $this->defaultTags(),
+            'pinned_notes' => $this->defaultPinnedNotes(),
+            default        => [],
+        };
+    }
+
 
     /* ========================= NOTE DETAIL ========================= */
 
