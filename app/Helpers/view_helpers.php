@@ -50,8 +50,12 @@ if (!function_exists('safeStr')) {
     }
 }
 
-function logo(string $path): string 
+function logo(?string $path): string 
 {
+    if (empty($path)) {
+        app_log("logo(): Using default logo path", "warning");
+        return IMG_URL . 'default_logo.png';
+    }
     return IMG_URL . $path;
 }
 

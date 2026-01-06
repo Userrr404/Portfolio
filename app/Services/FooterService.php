@@ -11,12 +11,10 @@ class FooterData
     private string $cacheKeyLinks  = "footer_quick_links";
     private string $cacheKeySocial = "footer_social_links";
 
-    // config paths may legitimately not exist
     private ?string $defaultFooterPath = null;
     private ?string $defaultLinksPath  = null;
     private ?string $defaultSocialPath = null;
 
-    // REQUIRED keys to prevent undefined index errors
     private array $requiredFooterKeys = [
         "brand_name",
         "footer_description",
@@ -26,14 +24,13 @@ class FooterData
 
     public function __construct()
     {
-        // CONFIG-SAFE (no fatal error if missing)
         $this->defaultFooterPath = safe_path('FOOTER_DEFAULT_FILE');
         $this->defaultLinksPath  = safe_path('FOOTER_LINKS_DEFAULT_FILE');
         $this->defaultSocialPath = safe_path('FOOTER_SOCIAL_DEFAULT_FILE');
     }
 
     /* ============================================================
-       PUBLIC MAIN METHOD
+       PUBLIC API (MATCHES HomeModel / HeaderData)
     ============================================================ */
     public function get(): array
     {
@@ -45,151 +42,212 @@ class FooterData
     }
 
     /* ============================================================
-       FOOTER SETTINGS (Cache → DB → JSON → Hardcoded)
+       FOOTER SETTINGS
     ============================================================ */
     private function getFooter(): array
     {
-        // 1. Cache
+        /** A. Cache */
         if ($cache = CacheService::load($this->cacheKeyFooter)) {
-            return $this->normalizeFooter($cache);
+
+            return [
+                "source" => "cache",
+                "data"   => $this->normalizeFooter($cache)
+            ];
         }
 
-        // 2. DB
-        $db = $this->getFooterFromDB();
-        if (!empty($db)) {
-            CacheService::save($this->cacheKeyFooter, $db);
-            return $this->normalizeFooter($db);
-        }
-
-        if ($this->defaultFooterPath && file_exists($this->defaultFooterPath)) {
-            $json = json_decode(file_get_contents($this->defaultFooterPath), true);
-            if (!empty($json)) return $this->normalizeFooter($json);
-        }
-
-        // 4. Hardcoded fallback
-        return $this->normalizeFooter($this->defaultFooter());
-    }
-
-    private function getFooterFromDB(): array
-    {
+        /** B. DB */
         try {
             $pdo = DB::getInstance()->pdo();
-            $stmt = $pdo->query("SELECT * FROM footer_settings LIMIT 1");
-            return $stmt->fetch() ?: [];
+            $stmt = $pdo->query("SELECT * FROM footer_settings WHERE is_active = 1 LIMIT 1");
+            $row  = $stmt->fetch() ?: [];
+
+            if (!empty($row)) {
+                CacheService::save($this->cacheKeyFooter, $row);
+
+                return [
+                    "source" => "db",
+                    "data"   => $this->normalizeFooter($row)
+                ];
+            }
+
         } catch (Throwable $e) {
-            app_log("FooterData@DB footer error: " . $e->getMessage(), "error");
-            return [];
+            app_log("FooterData@getFooter DB error: " . $e->getMessage(), "error");
+
+            return [
+                "source" => "error",
+                "data"   => $this->normalizeFooter($this->defaultFooter())
+            ];
         }
+
+        /** C. Default JSON */
+        if ($this->defaultFooterPath && file_exists($this->defaultFooterPath)) {
+            $json = json_decode(file_get_contents($this->defaultFooterPath), true);
+
+            if (!empty($json)) {
+
+                return [
+                    "source" => "json",
+                    "data"   => $this->normalizeFooter($json)
+                ];
+            }
+        }
+
+        /** D. Hard fallback */
+        return [
+            "source" => "fallback",
+            "data"   => $this->normalizeFooter($this->defaultFooter())
+        ];
     }
 
     /* ============================================================
-       FOOTER QUICK LINKS (Cache → DB → JSON → Hardcoded)
+       FOOTER QUICK LINKS
     ============================================================ */
     private function getLinks(): array
     {
-        // 1. Cache
+        /** A. Cache */
         if ($cache = CacheService::load($this->cacheKeyLinks)) {
-            return $cache;
+
+            return [
+                "source" => "cache",
+                "data"   => $cache
+            ];
         }
 
-        // 2. DB
-        $db = $this->getLinksFromDB();
-        if (!empty($db)) {
-            CacheService::save($this->cacheKeyLinks, $db);
-            return $db;
-        }
-
-        if ($this->defaultLinksPath && file_exists($this->defaultLinksPath)) {
-            $json = json_decode(file_get_contents($this->defaultLinksPath), true);
-            if (!empty($json)) return $json;
-        }
-
-        // 4. Hardcoded fallback
-        return $this->defaultLinks();
-    }
-
-    private function getLinksFromDB(): array
-    {
+        /** B. DB */
         try {
             $pdo = DB::getInstance()->pdo();
             $stmt = $pdo->query("
-                SELECT *
+                SELECT label, url
                 FROM navigation_links
                 WHERE is_active = 1
                 ORDER BY order_no ASC
             ");
 
-            return $stmt->fetchAll() ?: [];
+            $rows = $stmt->fetchAll() ?: [];
+
+            if (!empty($rows)) {
+                CacheService::save($this->cacheKeyLinks, $rows);
+
+                return [
+                    "source" => "db",
+                    "data"   => $rows
+                ];
+            }
+
         } catch (Throwable $e) {
-            app_log("FooterData@DB links error: " . $e->getMessage(), "error");
-            return [];
+            app_log("FooterData@getLinks DB error: " . $e->getMessage(), "error");
+
+            return [
+                "source" => "error",
+                "data"   => $this->defaultLinks()
+            ];
         }
+
+        /** C. Default JSON */
+        if ($this->defaultLinksPath && file_exists($this->defaultLinksPath)) {
+            $json = json_decode(file_get_contents($this->defaultLinksPath), true);
+
+            if (!empty($json)) {
+
+                return [
+                    "source" => "json",
+                    "data"   => $json
+                ];
+            }
+        }
+
+        /** D. Hard fallback */
+        return [
+            "source" => "fallback",
+            "data"   => $this->defaultLinks()
+        ];
     }
 
     /* ============================================================
-       SOCIAL LINKS (Cache → DB → JSON → Hardcoded)
+       SOCIAL LINKS
     ============================================================ */
     private function getSocial(): array
     {
-        // 1. Cache
+        /** A. Cache */
         if ($cache = CacheService::load($this->cacheKeySocial)) {
-            return $cache;
+
+            return [
+                "source" => "cache",
+                "data"   => $cache
+            ];
         }
 
-        // 2. DB
-        $db = $this->getSocialFromDB();
-        if (!empty($db)) {
-            CacheService::save($this->cacheKeySocial, $db);
-            return $db;
-        }
-
-        if ($this->defaultSocialPath && file_exists($this->defaultSocialPath)) {
-            $json = json_decode(file_get_contents($this->defaultSocialPath), true);
-            if (!empty($json)) return $json;
-        }
-
-        // 4. Hardcoded fallback
-        return $this->defaultSocial();
-    }
-
-    private function getSocialFromDB(): array
-    {
+        /** B. DB */
         try {
             $pdo = DB::getInstance()->pdo();
             $stmt = $pdo->query("
-                SELECT platform, url, icon_class 
-                FROM social_links 
+                SELECT platform, url, icon_class
+                FROM social_links
                 WHERE is_active = 1
             ");
 
-            return $stmt->fetchAll() ?: [];
+            $rows = $stmt->fetchAll() ?: [];
+
+            if (!empty($rows)) {
+                CacheService::save($this->cacheKeySocial, $rows);
+
+                return [
+                    "source" => "db",
+                    "data"   => $rows
+                ];
+            }
+
+
         } catch (Throwable $e) {
-            app_log("FooterData@DB social error: " . $e->getMessage(), "error");
-            return [];
+            app_log("FooterData@getSocial DB error: " . $e->getMessage(), "error");
+
+            return [
+                "source" => "error",
+                "data"   => $this->defaultSocial()
+            ];
         }
+
+        /** C. Default JSON */
+        if ($this->defaultSocialPath && file_exists($this->defaultSocialPath)) {
+            $json = json_decode(file_get_contents($this->defaultSocialPath), true);
+
+            if (!empty($json)) {
+
+                return [
+                    "source" => "json",
+                    "data"   => $json
+                ];
+            }
+        }
+
+        /** D. Hard fallback */
+        return [
+            "source" => "fallback",
+            "data"   => $this->defaultSocial()
+        ];
     }
 
     /* ============================================================
-       DEFAULTS (Hardcoded)
+       DEFAULTS
     ============================================================ */
     private function defaultFooter(): array
     {
         return [
-            "brand_name"        => SITE_TITLE,
-            "footer_description"=> "DD Full Stack & Android Developer — Crafting digital solutions.",
-            "developer_name"    => SITE_TITLE,
-            "accent_color"      => ACCENT_COLOR
+            "brand_name"         => SITE_TITLE,
+            "footer_description" => "DDFull Stack & Android Developer — Crafting digital solutions.",
+            "developer_name"     => SITE_TITLE,
+            "accent_color"       => ACCENT_COLOR
         ];
     }
 
     private function defaultLinks(): array
     {
         return [
-            ["label" => "DD Home",     "url" => HOME_URL_NO_BASE],
+            ["label" => "DDHome",     "url" => HOME_URL_NO_BASE],
             ["label" => "About",    "url" => ABOUT_URL_NO_BASE],
             ["label" => "Projects", "url" => PROJECTS_URL_NO_BASE],
             ["label" => "Notes",    "url" => NOTES_URL_NO_BASE],
-            ["label" => "Contact",  "url" => CONTACT_URL_NO_BASE]
+            ["label" => "Contact",  "url" => CONTACT_URL_NO_BASE],
         ];
     }
 
@@ -199,21 +257,18 @@ class FooterData
             ["platform" => "GitHub",   "url" => "DDhttps://github.com",   "icon_class" => "fa-github"],
             ["platform" => "LinkedIn", "url" => "https://linkedin.com", "icon_class" => "fa-linkedin"],
             ["platform" => "Twitter",  "url" => "https://twitter.com",  "icon_class" => "fa-twitter"],
-            ["platform" => "Email",    "url" => "mailto:hello@example.com", "icon_class" => "fa-envelope"]
+            ["platform" => "Email",    "url" => "mailto:hello@example.com", "icon_class" => "fa-envelope"],
         ];
     }
 
     /* ============================================================
-       NORMALIZATION LAYER
-       Prevents ALL "undefined index" warnings
+       NORMALIZATION (NO array_filter BUGS)
     ============================================================ */
     private function normalizeFooter(array $footer): array
     {
-        $footer = array_filter($footer); // Remove empty/null
-
         foreach ($this->requiredFooterKeys as $key) {
-            if (!array_key_exists($key, $footer)) {
-                $footer[$key] = ""; // Safe value to avoid warnings
+            if (!array_key_exists($key, $footer) || $footer[$key] === null) {
+                $footer[$key] = "";
             }
         }
 

@@ -8,8 +8,11 @@ $db = DB::getInstance()->pdo();
 
 // Pass DB to HeaderData
 $data = (new HeaderData($db))->get();
-$header     = $data['header'];
-$nav_links  = $data['nav'];
+$headerPayload = $data['header'] ?? [];
+$navPayload    = $data['nav'] ?? [];
+
+$header     = $headerPayload['data'] ?? [];
+$nav_links  = $navPayload['data'] ?? [];
 
 // Header asset paths
 $header_css = [HEADER_CSS];

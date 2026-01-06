@@ -28,9 +28,13 @@ if (!$safeMode) {
         $db = \app\Core\DB::getInstance()->pdo();
         $footerData = (new \app\Services\FooterData($db))->get();
 
-        $footer       = is_array($footerData['footer'] ?? null) ? $footerData['footer'] : [];
-        $footer_links = is_array($footerData['links']  ?? null) ? $footerData['links']  : [];
-        $social_links = is_array($footerData['social'] ?? null) ? $footerData['social'] : [];
+        $footerPayload = $footerData['footer'] ?? [];
+        $linksPayload  = $footerData['links']  ?? [];
+        $socialPayload = $footerData['social'] ?? [];
+
+        $footer       = $footerPayload['data'] ?? [];
+        $footer_links = $linksPayload['data']  ?? [];
+        $social_links = $socialPayload['data'] ?? [];
 
     } catch (Throwable $e) {
         app_log("Footer fallback triggered: " . $e->getMessage(), "error");
