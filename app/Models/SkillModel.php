@@ -23,7 +23,10 @@ class SkillModel {
          * A. TRY CACHE
          * ----------------------------------------------------*/
         if ($cache = CacheService::load($this->cacheKey)) {
-            return $cache;
+            return [
+                "source" => "cache",
+                "data"   => $cache
+            ];
         }
 
         /** ----------------------------------------------------
@@ -40,16 +43,24 @@ class SkillModel {
             ");
             $stmt->execute();
 
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ? : [];
 
             // Only if DB returned real data
             if (!empty($rows)) {
                 CacheService::save($this->cacheKey, $rows);
-                return $rows;
+                return [
+                    "source" => "database",
+                    "data"   => $rows
+                ];
             }
 
         } catch (Throwable $e) {
             app_log("SkillModel@all DB error: " . $e->getMessage(), "error");
+
+            return [
+                "source" => "error",
+                "data"   => $this->defaults()
+            ];
         }
 
         /** ----------------------------------------------------
@@ -59,14 +70,20 @@ class SkillModel {
             $json = json_decode(file_get_contents($this->defaultJson), true);
 
             if (!empty($json) && is_array($json)) {
-                return $json;
+                return [
+                    "source" => "json",
+                    "data"   => $json
+                ];
             }
         }
 
         /** ----------------------------------------------------
          * D. HARD-CODED DEFAULTS
          * ----------------------------------------------------*/
-        return $this->defaults();
+        return [
+            "source" => "fallback",
+            "data"   => $this->defaults()
+        ];
     }
 
     /**

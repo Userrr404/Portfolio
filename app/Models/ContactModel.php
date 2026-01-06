@@ -23,7 +23,10 @@ class ContactModel {
          * A. TRY CACHE
          * ----------------------------------------------------*/
         if ($cache = CacheService::load($this->cacheKey)) {
-            return $cache;
+            return [
+                "source" => "cache",
+                "data"   => $cache
+            ];
         }
 
         /** ----------------------------------------------------
@@ -40,15 +43,23 @@ class ContactModel {
             ");
             $stmt->execute();
 
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC) ? : [];
 
             if (!empty($row)) {
                 CacheService::save($this->cacheKey, $row);
-                return $row;
+                return [
+                    "source" => "db",
+                    "data"   => $row
+                ];
             }
 
         } catch (Throwable $e) {
             app_log("ContactModel@get DB error: " . $e->getMessage(), "error");
+
+            return [
+                "source" => "error",
+                "data"   => $this->defaults()
+            ];
         }
 
         /** ----------------------------------------------------
@@ -57,14 +68,20 @@ class ContactModel {
         if ($this->defaultHomeJson && file_exists($this->defaultHomeJson)) {
             $json = json_decode(file_get_contents($this->defaultHomeJson), true);
             if (!empty($json) && is_array($json)) {
-                return $json;
+                return [
+                    "source" => "json",
+                    "data"   => $json
+                ];
             }
         }
 
         /** ----------------------------------------------------
          * D. HARD-CODED DEFAULT FALLBACK
          * ----------------------------------------------------*/
-        return $this->defaults();
+        return [
+            "source" => "fallback",
+            "data"   => $this->defaults()
+        ];
     }
 
     private function defaults(): array

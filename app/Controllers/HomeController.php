@@ -53,11 +53,11 @@ class HomeController extends Controller
             $data = [
                 "safe_mode" => false,
 
-                "home"     => $this->wrap($this->home->get(), "home"),
-                "about"    => $this->wrap($this->about->get(), "about"),
-                "skills"   => $this->wrap($this->skills->all(), "skills"),
-                "projects" => $this->wrapProject($this->projects->getFeatured()),
-                "contact"  => $this->wrap($this->contact->get(), "contact"),
+                "home"     => $this->wrap($this->home->get()),
+                "about"    => $this->wrap($this->about->get()),
+                "skills"   => $this->wrap($this->skills->all()),
+                "projects" => $this->wrap($this->projects->getFeatured()),
+                "contact"  => $this->wrap($this->contact->get()),
             ];
 
 
@@ -102,23 +102,11 @@ class HomeController extends Controller
     /* ============================================================
      * STANDARD WRAPPER FOR ALL MODELS
      * ============================================================ */
-    private function wrap($data, string $label): array
-    {
-        if (!is_array($data) || empty($data) || isset($data["is_default"])) {
-            return ["from_db" => false, "data" => $data ?: []];
-        }
-
-        return ["from_db" => true, "data" => $data];
-    }
-
-    /* ============================================================
-     * PROJECT MODEL HAS EXPLICIT SOURCE
-     * ============================================================ */
-    private function wrapProject(array $payload): array
+    private function wrap(array $payload): array
     {
         return [
-            "from_db" => ($payload["source"] ?? "") === "db",
-            "data"    => $payload["data"] ?? []
+            "from_db" => $payload["source"] === "db",
+            "data"    => $payload["data"]
         ];
     }
 

@@ -41,7 +41,10 @@ class AboutModel {
     {
         // Try cache first
         if ($cache = CacheService::load($this->cacheKey)) {
-            return $cache;
+            return [
+                "source" => "cache",
+                "data"   => $cache
+            ];
         }
 
         try {
@@ -49,16 +52,24 @@ class AboutModel {
             $pdo = DB::getInstance()->pdo();
             $stmt = $pdo->prepare("SELECT * FROM about_section WHERE is_active = 1 LIMIT 1");
             $stmt->execute();
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC) ? : [];
 
             // Only save when DB returns valid data
             if (!empty($row)) {
                 CacheService::save($this->cacheKey, $row);
-                return $row;
+                return [
+                    "source" => "db",
+                    "data"   => $row
+                ];
             }
 
         } catch (Throwable $e) {
             app_log("AboutModel@get DB error: " . $e->getMessage(), "error");
+
+            return [
+                "source" => "error",
+                "data"   => $this->defaults()
+            ];
         }
 
         /** ----------------------------------------------------
@@ -67,14 +78,20 @@ class AboutModel {
         if ($this->defaultPath && file_exists($this->defaultPath)) {
             $json = json_decode(file_get_contents($this->defaultPath), true);
             if (!empty($json) && is_array($json)) {
-                return $json;
+                return [
+                    "source" => "json",
+                    "data"   => $json
+                ];
             }
         }
 
         /** ----------------------------------------------------
         * D. HARD-CODED FALLBACK
         * ----------------------------------------------------*/
-        return $this->defaults();
+        return [
+            "source" => "fallback",
+            "data"   => $this->defaults()
+        ];
     }
 
     /* ============================================================

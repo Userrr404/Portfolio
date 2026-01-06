@@ -36,21 +36,33 @@ class HomeModel
             $pdo = DB::getInstance()->pdo();
             $stmt = $pdo->query("SELECT * FROM home_section WHERE is_active=1 LIMIT 1");
 
+            // $row = $stmt->fetch(PDO::FETCH_ASSOC); // It tries to resolve from app\Models\PDO class and fails. (Reolve by without PDO:: prefix)
             $row = $stmt->fetch() ?: [];
 
             // Save ONLY if DB returned meaningful data
             if (!empty($row)) {
                 CacheService::save($this->cacheKey, $row);
-                return $row;
+                return [
+                    "source" => "db",
+                    "data"   => $row
+                ];
             }
+
+            return [
+                "source" => "empty",
+                "data"   => []
+            ];
 
         } catch (Throwable $e) {
 
             // Never crash the home page — log and fallback
             app_log("HomeModel@get DB error: " . $e->getMessage(), "error");
-        }
 
-        return [];
+            return [
+                "source" => "error",
+                "data"   => $this->defaultHome()
+            ];
+        }
     }
 
 
@@ -58,24 +70,37 @@ class HomeModel
     private function getFallbackMode(): array{
         /** A. Try cache */
         if ($cache = CacheService::load($this->cacheKey)) {
-            return $cache;
+            return [
+                "source" => "cache",
+                "data"   => $cache
+            ];
         }
 
         /** B. Try DB */
         $row = $this->getOnlyDB();
-        if (!empty($row)) {
-            CacheService::save($this->cacheKey, $row);
+        if ($row["source"] === "db" && !empty($row["data"])) {
+            CacheService::save($this->cacheKey, $row["data"]);
             return $row;
         }
 
         /** C. Try default JSON */
-        if ($this->defaultPath && file_exists($this->defaultPath)) {
-            $json = json_decode(file_get_contents($this->defaultPath), true);
-            if (!empty($json)) return $json;
+        if ($row["source"] === "empty") {
+            if ($this->defaultPath && file_exists($this->defaultPath)) {
+                $json = json_decode(file_get_contents($this->defaultPath), true);
+                if (!empty($json)) {
+                    return [
+                        "source" => "json",
+                        "data"   => $json
+                    ];
+                }
+            }
         }
 
         /** D. Hard-coded fallback */
-        return $this->defaultHome();
+        return [
+            "source" => "fallback",
+            "data"   => $this->defaultHome()
+        ];
     }
 
 

@@ -25,7 +25,7 @@ class ProjectModel {
 
         if ($cache = CacheService::load($cacheKey)) {
             return [
-                "source" => "db",
+                "source" => "cache",
                 "data"   => $cache
             ];
         }
@@ -33,7 +33,7 @@ class ProjectModel {
         try {
             $pdo = DB::getInstance()->pdo();
             $stmt = $pdo->query("SELECT * FROM projects WHERE is_active = 1 AND is_featured = 1 ORDER BY sort_order ASC");
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ? : [];
 
             if (!empty($rows)) {
                 CacheService::save($cacheKey, $rows);
@@ -46,6 +46,11 @@ class ProjectModel {
 
         } catch (Throwable $e) {
             app_log("ProjectModel@getFeatured DB ERROR: " . $e->getMessage(), "error");
+
+            return [
+                "source" => "error",
+                "data"   => $this->defaultFeatured()
+            ];
         }
 
         /** ----------------------------------------------------
