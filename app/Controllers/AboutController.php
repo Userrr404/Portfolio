@@ -55,12 +55,13 @@ class AboutController extends Controller
              * --------------------------------------------------- */
             $data = [
                 "safe_mode" => false,
-                "hero"       => $this->safeLoad(fn() => $this->about->getHero(),       "hero"),
-                "content"    => $this->safeLoad(fn() => $this->about->getContent(),    "content"),
-                "skills"     => $this->safeLoad(fn() => $this->about->getSkills(),     "skills"),
-                "experience" => $this->safeLoad(fn() => $this->about->getExperience(), "experience"),
-                "education"  => $this->safeLoad(fn() => $this->about->getEducation(),  "education"),
-                "stats"      => $this->safeLoad(fn() => $this->about->getStats(),      "stats"),
+
+                "hero"       => $this->wrap($this->about->getHero()),
+                "content"    => $this->wrap($this->about->getContent()),
+                "skills"     => $this->wrap($this->about->getSkills()),
+                "experience" => $this->wrap($this->about->getExperience()),
+                "education"  => $this->wrap($this->about->getEducation()),
+                "stats"      => $this->wrap($this->about->getStats()),
             ];
 
             /** ---------------------------------------------------
@@ -103,55 +104,15 @@ class AboutController extends Controller
      * SECTION LOADER (safe wrapper)
      * ============================================================ */
 
-    /**
-     * Safely loads a single About section.
-     *
-     * Ensures:
-     *  - A failing model function will NOT break the page.
-     *  - Differentiates between DB data and default/fallback.
-     *  - Standardizes section output for the view.
-    */
-    private function safeLoad(callable $fn, string $label): array
+
+    private function wrap(array $payload): array
     {
-        try {
-            $data = $fn();
-
-            // Invalid result (null, bool, string, etc)
-            if (!is_array($data)) {
-                return ["from_db" => false, "data" => $this->about->fallback($label)];
-            }
-
-            // If Manual JSON files are there then always check JSON files then latter check hard-coded fallback
-            // JSON defaults wrapped as: [ "is_default_json" => true, "data" => [...] ] for single & multi lines recored
-            if (isset($data["is_default_json"]) && isset($data["data"])) {
-                return [
-                    "from_db" => false,
-                    "data"    => $data["data"]
-                ];
-            }
-
-            // Detect default fallback (prevents caching)
-            // CASE 1: Model returned fallback defaults (contains is_default)
-            if (isset($data["is_default"]) && $data["is_default"] === true) {
-                return [
-                    "from_db" => false,
-                    "data"    => $data
-                ];
-            }
-
-            // Valid DB rows returned
-            if (!empty($data)) {
-                return ["from_db" => true, "data" => $data];
-            }
-
-            // Empty → use fallback
-            return ["from_db" => false, "data" => $this->about->fallback($label)];
-
-        } catch (Throwable $e) {
-            app_log("AboutController: Failed loading section {$label}: " . $e->getMessage(), "warning");
-            return ["from_db" => false, "data" => $this->about->fallback($label)];
-        }
+        return [
+            "from_db" => ($payload["source"]) === "db",
+            "data"    => $payload["data"]
+        ];
     }
+
 
     /**
      * Returns TRUE only when ALL sections successfully loaded
@@ -159,8 +120,10 @@ class AboutController extends Controller
     */
     private function hasRealData(array $sections): bool
     {
-        foreach ($sections as $section) {
-            if (!isset($section["from_db"]) || $section["from_db"] !== true) {
+        foreach ($sections as $key => $section) {
+            if ($key === "safe_mode") continue;
+
+            if (($section["from_db"] ?? false) !== true) {
                 return false;
             }
         }

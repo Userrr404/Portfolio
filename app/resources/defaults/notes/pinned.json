@@ -2,21 +2,21 @@
   {
     "title": "from defaultpath API Security Checklist",
     "description": "Checklist for securing your API endpoints using modern authentication and request validation practices.",
-    "slug": "web",
+    "slug": "api-security-checklist",
     "category_name": "Web Development",
     "link": "#"
   },
   {
     "title": "React Performance Tips",
     "description": "Essential techniques to improve React rendering performance in large production applications.",
-    "slug": "web",
+    "slug": "react-performance-tips",
     "category_name": "Web Development",
     "link": "#"
   },
   {
     "title": "Dynamic Programming Patterns",
     "description": "A simplified explanation of the most common DP patterns: decision tree, overlapping subproblems, memoization.",
-    "slug": "ds",
+    "slug": "dynamic-programming-patterns",
     "category_name": "DSA",
     "link": "#"
   }

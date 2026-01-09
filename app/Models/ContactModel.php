@@ -95,87 +95,113 @@ class ContactModel {
         ];
     }
 
-    /* --------------------------
-     * Unified loader helper
-     * -------------------------- */
-    private function loadUnified(string $cacheKey, string $table, string $jsonPathConst, callable $fallbackFn, bool $single = false)
+    /* ============================================================
+     * UNIFIED SECTION LOADER
+     * Cache → DB → JSON → Fallback
+     * ============================================================ */
+    private function loadUnified(string $cacheKey, string $sql, string $jsonPathConst, callable $fallbackFn, bool $single = false): array 
     {
         // A. Try cache (section-level)
         if ($cache = CacheService::load($cacheKey)) {
-            return $cache;
+            return [
+                "source" => "cache", 
+                "data" => $cache
+            ];
         }
 
         // B. Try DB
         try {
             $pdo = DB::getInstance()->pdo();
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute();
 
-            if ($single) {
-                $stmt = $pdo->prepare("SELECT * FROM {$table} WHERE is_active = 1 LIMIT 1");
-                $stmt->execute();
-                $result = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-            } else {
-                $stmt = $pdo->prepare("SELECT * FROM {$table} WHERE is_active = 1 ORDER BY sort_order ASC");
-                $stmt->execute();
-                $result = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-            }
+            $data = $single
+                ? ($stmt->fetch(PDO::FETCH_ASSOC) ?: [])
+                : ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
 
-            if (!empty($result)) {
-                CacheService::save($cacheKey, $result);
-                return $result;
+            if (!empty($data)) {
+                CacheService::save($cacheKey, $data);
+                return ["source" => "db", "data" => $data];
             }
         } catch (Throwable $e) {
-            app_log("ContactModel DB error ({$table}): " . $e->getMessage(), "error");
+            app_log("ContactModel DB error: ".$e->getMessage(), "error");
         }
 
-        // C. Try JSON defaults (wrapped)
+        // C. JSON defaults (DC-02 path)
         $jsonFile = safe_path($jsonPathConst);
 
         if ($jsonFile && file_exists($jsonFile)) {
             $json = json_decode(file_get_contents($jsonFile), true);
-            if (!empty($json) && is_array($json)) {
+            if (!empty($json)) {
                 return [
-                    "is_default_json" => true,
+                    "source" => "json", 
                     "data" => $json
                 ];
             }
         }
 
-        // D. Hard-coded fallback
-        return $fallbackFn();
+        // D. Hard fallback
+        return [
+            "source" => "fallback", 
+            "data" => $fallbackFn()
+        ];
     }
 
     /* --------------------------
      * Public section getters
      * -------------------------- */
 
-    // Hero is a single-record section
-    public function getHero()
+    public function getHero(): array
     {
-        return $this->loadUnified("contact_hero", "contact_page_settings", 'CONTACT_HERO_DEFAULT_FILE', [$this, 'defaultHero'], true);
+        return $this->loadUnified(
+            "contact_hero",
+            "SELECT * FROM contact_page_settings WHERE is_active = 1 LIMIT 1",
+            "CONTACT_HERO_DEFAULT_FILE",
+            [$this, "defaultHero"],
+            true
+        );
     }
 
-    // Info is list of contact_info rows
-    public function getInfo()
+    public function getInfo(): array
     {
-        return $this->loadUnified("contact_info", "contact_info", 'CONTACT_INFO_DEFAULT_FILE', [$this, 'defaultInfo']);
+        return $this->loadUnified(
+            "contact_info",
+            "SELECT * FROM contact_info WHERE is_active = 1 ORDER BY sort_order ASC",
+            "CONTACT_INFO_DEFAULT_FILE",
+            [$this, "defaultInfo"]
+        );
     }
 
-    // Socials is list of contact_social_links rows
-    public function getSocials()
+    public function getSocials(): array
     {
-        return $this->loadUnified("contact_socials", "contact_social_links", 'CONTACT_SOCIALS_DEFAULT_FILE', [$this, 'defaultSocials']);
+        return $this->loadUnified(
+            "contact_socials",
+            "SELECT * FROM contact_social_links WHERE is_active = 1 ORDER BY sort_order ASC",
+            "CONTACT_SOCIALS_DEFAULT_FILE",
+            [$this, "defaultSocials"]
+        );
     }
 
-    // Map is single-record (could be in settings)
-    public function getMap()
+    public function getMap(): array
     {
-        return $this->loadUnified("contact_map", "contact_page_settings", 'CONTACT_MAP_DEFAULT_FILE', [$this, 'defaultMap'], true);
+        return $this->loadUnified(
+            "contact_map",
+            "SELECT * FROM contact_page_settings WHERE is_active = 1 LIMIT 1",
+            "CONTACT_MAP_DEFAULT_FILE",
+            [$this, "defaultMap"],
+            true
+        );
     }
 
-    // Toast / small strings - single-record
-    public function getToast()
+    public function getToast(): array
     {
-        return $this->loadUnified("contact_toast", "contact_page_settings", 'CONTACT_TOAST_DEFAULT_FILE', [$this, 'defaultToast'], true);
+        return $this->loadUnified(
+            "contact_toast",
+            "SELECT * FROM contact_page_settings WHERE is_active = 1 LIMIT 1",
+            "CONTACT_TOAST_DEFAULT_FILE",
+            [$this, "defaultToast"],
+            true
+        );
     }
 
     /* --------------------------

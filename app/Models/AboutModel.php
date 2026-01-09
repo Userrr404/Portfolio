@@ -29,7 +29,6 @@ class AboutModel {
     // private int $defaultTTL = 3600; // seconds for section caches (tunable)
 
     public function __construct() {
-        require_once CACHESERVICE_FILE;
         $this->defaultPath = safe_path('HOME_ABOUT_DEFAULT_FILE');
     }
 
@@ -112,13 +111,16 @@ class AboutModel {
      * @param callable  $fallbackFn         Function returning default PHP data
      * @param bool      $single             If true → LIMIT 1, else → fetchAll()
     */
-    private function loadUnified(string $cacheKey, string $table, string $jsonPathConst, callable $fallbackFn, bool $single = false){
+    private function loadUnified(string $cacheKey, string $table, string $jsonPathConst, callable $fallbackFn, bool $single = false): array {
         
         /** ----------------------------------------------------
          * A. Check cache
          * ---------------------------------------------------- */
         if ($cache = CacheService::load($cacheKey)) {
-            return $cache;
+            return [
+                "source" => "cache",
+                "data"   => $cache
+            ];
         }
 
         /** ----------------------------------------------------
@@ -129,12 +131,12 @@ class AboutModel {
 
             if ($single) {
                 // Load one row
-                $stmt = $pdo->prepare("SELECT * FROM {$table} WHERE is_active = 1 LIMIT 1");
+                $stmt = $pdo->prepare("SELECT * FROM {$table} WHERE is_active = 0 LIMIT 1");
                 $stmt->execute();
                 $result = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
             } else {
                 // Load many rows
-                $stmt = $pdo->prepare("SELECT * FROM {$table} WHERE is_active = 1 ORDER BY sort_order ASC");
+                $stmt = $pdo->prepare("SELECT * FROM {$table} WHERE is_active = 0 ORDER BY sort_order ASC");
                 $stmt->execute();
                 $result = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
             }
@@ -142,11 +144,19 @@ class AboutModel {
             // Only store when DB returns valid results
             if (!empty($result)) {
                 CacheService::save($cacheKey, $result);
-                return $result;
+                return [
+                    "source" => "db",
+                    "data"   => $result
+                ];
             }
 
         } catch (Throwable $e) {
             app_log("AboutModel DB error {$table}: " . $e->getMessage(), "error");
+
+            return [
+                "source" => "error",
+                "data"   => $fallbackFn()
+            ];
         }
 
         /** ----------------------------------------------------
@@ -158,10 +168,9 @@ class AboutModel {
             $json = json_decode(file_get_contents($jsonFile), true);
 
             if (!empty($json)) {
-                // ALWAYS wrap JSON defaults for controller consistency
                 return [
-                    "is_default_json" => true,
-                    "data" => $json
+                    "source" => "json",
+                    "data"   => $json
                 ];
             }
         }
@@ -169,7 +178,10 @@ class AboutModel {
         /** ----------------------------------------------------
          * D. Final fallback – guaranteed non-empty
          * ---------------------------------------------------- */
-        return $fallbackFn();
+        return [
+            "source" => "fallback",
+            "data"   => $fallbackFn()
+        ];
     }
 
 

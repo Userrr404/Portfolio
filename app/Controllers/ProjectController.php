@@ -5,6 +5,7 @@ use app\core\Controller;
 use app\Models\ProjectModel;
 use app\Services\CacheService;
 use Throwable;
+
 class ProjectController extends Controller
 {
     private ProjectModel $projects;
@@ -45,32 +46,40 @@ class ProjectController extends Controller
                 return $this->view("pages/projects", $cached);
             }
 
-            /* ---------------------------------------------------
-             * 2. Load project listing (includes pagination & filters)
-             *    This internally follows A->B->C->D
-             * --------------------------------------------------- */
-            $projectData = $this->safeLoad(
-                fn() => $this->projects->getPaginatedProjects(),
-                "projects"
+            /* -----------------------------------------------
+             * 2. LOAD PRIMARY ENTITY (PROJECTS)
+             * ----------------------------------------------- */
+            $projects = $this->wrap(
+                $this->projects->getPaginatedProjects()
+            );
+
+            /* -----------------------------------------------
+             * 3. NORMALIZE SOURCE
+             * cache is DB-derived
+             * ----------------------------------------------- */
+            if ($projects["source"] === "cache") {
+                $projects["source"] = "db";
+            }
+
+            /* -----------------------------------------------
+             * 4. 🔒 STRICT SOURCE LOCK (THIS IS THE FIX)
+             * ----------------------------------------------- */
+            $tech = $this->projects->getTechBySource($projects["source"]);
+
+            app_log(
+                "ProjectController source locked: projects={$projects["source"]}, tech={$tech["source"]}",
+                "debug"
             );
 
             /* ---------------------------------------------------
-             * 3. Load tech list (for badges) - follows A->B->C->D
+             * 5. FINAL VIEW DATA
              * --------------------------------------------------- */
-            $techData = $this->safeLoad(
-                fn() => $this->projects->getAllTechStructured(),
-                "tech"
-            );
+            $proj = $projects["data"];
 
-            /* ---------------------------------------------------
-             * 4. FINAL response (view always gets perfect data)
-             * --------------------------------------------------- */
-            // ensure shape even if fallback returned different shaped data
-            $proj = $projectData["data"];
             $final = [
-                "safe_mode" => false,
+                "safe_mode"  => false,
                 "projects"   => $proj["items"] ?? [],
-                "techList"   => $techData["data"] ?? [],
+                "techList"   => $tech["data"] ?? [],
                 "page"       => $proj["page"] ?? 1,
                 "totalPages" => $proj["totalPages"] ?? 1,
                 "total"      => $proj["total"] ?? 0,
@@ -80,10 +89,7 @@ class ProjectController extends Controller
             /* ---------------------------------------------------
              * 5. Save CACHE only when ALL sections came from DB
              * --------------------------------------------------- */
-            if ($this->hasRealData([
-                "projects" => $projectData,
-                "techList" => $techData
-            ])) {
+            if ($projects["source"] === "db" && $tech["source"] === "db") {
                 CacheService::save($this->cacheKey, $final);
             }
 
@@ -105,37 +111,13 @@ class ProjectController extends Controller
         }
     }
 
-
-    /* ============================================================
-     * SAFE LOAD (same structure as AboutController)
-     * ============================================================ */
-    private function safeLoad(callable $fn, string $label): array
+    // Replace with safeload()
+    private function wrap(array $payload): array
     {
-        try {
-            $data = $fn();
-
-            // not an array → fallback
-            if (!is_array($data)) {
-                return ["from_db" => false, "data" => $this->projects->fallback($label)];
-            }
-
-            // JSON default marker
-            if (isset($data["is_default"]) && $data["is_default"]) {
-                return ["from_db" => false, "data" => $data];
-            }
-
-            // DB result (non-empty)
-            if (!empty($data)) {
-                return ["from_db" => true, "data" => $data];
-            }
-
-            // empty → fallback
-            return ["from_db" => false, "data" => $this->projects->fallback($label)];
-
-        } catch (Throwable $e) {
-            app_log("ProjectController safeLoad({$label}) FAILED: " . $e->getMessage(), "warning");
-            return ["from_db" => false, "data" => $this->projects->fallback($label)];
-        }
+        return [
+            "source" => $payload["source"] ?? "fallback",
+            "data"   => $payload["data"] ?? []
+        ];
     }
 
     /**
@@ -163,7 +145,7 @@ class ProjectController extends Controller
     private function hasRealData(array $sections): bool
     {
         foreach ($sections as $section) {
-            if (!isset($section["from_db"]) || $section["from_db"] !== true) {
+            if ($section["source"] !== "db" ) {
                 return false;
             }
         }

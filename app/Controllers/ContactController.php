@@ -3,7 +3,7 @@ namespace app\Controllers;
 
 use app\Core\Controller;
 use app\Models\ContactModel;
-use app\Models\ContactMessageModel;   // ✅ REQUIRED
+use app\Models\ContactMessageModel;
 use app\Services\CacheService;
 use app\Services\MailService;
 use Throwable;
@@ -30,96 +30,65 @@ class ContactController extends Controller
         try {
             // 1) Try full page cache first
             if ($cached = CacheService::load($this->cacheKey)) {
-                $cached['safe_mode'] = false;
+                $cached["safe_mode"] = false;
                 return $this->view("pages/contact", $cached);
             }
 
             // 2) Load each section safely and independently
-            $sections = [
-                "hero"    => $this->safeLoad(fn() => $this->contact->getHero(), "hero"),
-                "info"    => $this->safeLoad(fn() => $this->contact->getInfo(), "info"),
-                "socials" => $this->safeLoad(fn() => $this->contact->getSocials(), "socials"),
-                "map"     => $this->safeLoad(fn() => $this->contact->getMap(), "map"),
-                "toast"   => $this->safeLoad(fn() => $this->contact->getToast(), "toast"),
+            $data = [
+                "safe_mode" => false,
+
+                "hero"    => $this->wrap($this->contact->getHero()),
+                "info"    => $this->wrap($this->contact->getInfo()),
+                "socials" => $this->wrap($this->contact->getSocials()),
+                "map"     => $this->wrap($this->contact->getMap()),
+                "toast"   => $this->wrap($this->contact->getToast()),
             ];
 
             // 3) Cache full page ONLY when ALL sections came from DB (prevent caching defaults)
-            if ($this->hasRealData($sections)) {
-                CacheService::save($this->cacheKey, $sections);
+            if ($this->hasRealData($data)) {
+                CacheService::save($this->cacheKey, $data);
             }
 
-            return $this->view("pages/contact", $sections);
+            return $this->view("pages/contact", $data);
 
         } catch (Throwable $e) {
-            app_log("SAFE MODE — ContactController@index", "critical");
+            app_log("SAFE MODE — ContactController@index: ".$e->getMessage(), "critical");
 
             // Emergency fallback - return guaranteed non-empty defaults from model
             return $this->view("pages/contact", [
                 "safe_mode" => true,
-                "hero"      => ["data" => $this->contact->fallback("hero")],
-                "info"      => ["data" => []],
-                "socials"   => ["data" => []],
-                "map"       => ["data" => []],
-                "toast"     => ["data" => []],
+                "hero"      => ["from_db" => false, "data" => $this->contact->defaultHero()],
+                "info"      => ["from_db" => false, "data" => []],
+                "socials"   => ["from_db" => false, "data" => []],
+                "map"       => ["from_db" => false, "data" => []],
+                "toast"     => ["from_db" => false, "data" => []],
             ]);
         }
     }
 
-    /**
-     * Safely loads a section using the provided callable (model method).
-     *
-     * Guarantees:
-     *  - If model throws or returns invalid data -> returns fallback
-     *  - Distinguishes DB-sourced data vs defaults (prevents caching fallback)
-     *  - Normalizes JSON-default wrapped responses
-     *
-     * Model return shapes handled:
-     *  - DB result array -> return ["from_db" => true, "data" => $data]
-     *  - JSON-default wrapper -> ["is_default_json"=>true,"data"=>...]
-     *  - Hard-coded fallback -> contains ["is_default"=>true]
-     */
-    private function safeLoad(callable $fn, string $label): array
+
+    /* =======================
+     * SAME AS HomeController
+     * ======================= */
+
+    private function wrap(array $payload): array
     {
-        try {
-            $result = $fn();
-
-            // Unexpected non-array -> fallback
-            if (!is_array($result)) {
-                return ["from_db" => false, "data" => $this->contact->fallback($label)];
-            }
-
-            // JSON defaults wrapper from model: return as fallback (not DB)
-            if (isset($result["is_default_json"]) && isset($result["data"])) {
-                return ["from_db" => false, "data" => $result["data"]];
-            }
-
-            // Hard-coded model fallback (explicit marker)
-            if (isset($result["is_default"]) && $result["is_default"] === true) {
-                return ["from_db" => false, "data" => $result];
-            }
-
-            // If non-empty array with DB-like structure -> treat as DB
-            if (!empty($result)) {
-                return ["from_db" => true, "data" => $result];
-            }
-
-            // Empty -> fallback
-            return ["from_db" => false, "data" => $this->contact->fallback($label)];
-
-        } catch (Throwable $e) {
-            app_log("ContactController: Failed loading section {$label}: " . $e->getMessage(), "warning");
-            return ["from_db" => false, "data" => $this->contact->fallback($label)];
-        }
+        return [
+            "from_db" => $payload["source"] === "db",
+            "data"    => $payload["data"]
+        ];
     }
 
     /**
      * Returns true only when ALL sections were loaded from real DB (from_db === true).
      * This prevents caching pages that are partially or fully fallback.
      */
-    private function hasRealData(array $sections): bool
+    private function hasRealData(array $data): bool
     {
-        foreach ($sections as $s) {
-            if (!isset($s["from_db"]) || $s["from_db"] !== true) {
+        foreach ($data as $k => $section) {
+            if ($k === "safe_mode") continue;
+            if (($section["from_db"] ?? false) !== true) {
                 return false;
             }
         }

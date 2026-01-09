@@ -143,7 +143,11 @@ class ProjectModel {
          * A. Try cache
          * ---------------------------- */
         if ($cached = CacheService::load($cacheKey)) {
-            return $cached;
+            app_log("ProjectModel getPaginatedProjects CACHE HIT", "debug");
+            return [
+                "source" => "cache",
+                "data"   => $cached
+            ];
         }
 
         /* ----------------------------
@@ -199,13 +203,22 @@ class ProjectModel {
 
             // Save only when DB returned real rows
             if (!empty($items)) {
+                app_log("ProjectModel getPaginatedProjects DB HIT", "debug");
                 CacheService::save($cacheKey, $response);
+                return [
+                    "source" => "db",
+                    "data"   => $response
+                ];
             }
 
-            return $response;
 
         } catch (Throwable $e) {
             app_log("ProjectModel getPaginatedProjects DB ERROR: " . $e->getMessage(), "error");
+
+            return [
+                "source" => "error",
+                "data"   => $this->fallbackPaginated($page, $perPage, $tech, $featured)
+            ];
         }
 
         /* ----------------------------
@@ -214,7 +227,7 @@ class ProjectModel {
         $jsonFile = safe_path('PROJECTS_DEFAULT_FILE');
         if ($jsonFile && file_exists($jsonFile)) {
             $all = json_decode(file_get_contents($jsonFile), true);
-            if (!empty($all) && is_array($all)) {
+            if (!empty($all)) {
                 // paginate JSON array
                 $filtered = $all;
 
@@ -232,13 +245,16 @@ class ProjectModel {
                 $total = count($filtered);
                 $items = array_slice(array_values($filtered), $offset, $perPage);
 
+                app_log("ProjectModel getPaginatedProjects JSON HIT", "debug");
                 return [
-                    "items"      => array_values($items),
-                    "total"      => $total,
-                    "page"       => $page,
-                    "totalPages" => max(1, (int)ceil($total / $perPage)),
-                    "filters"    => ["tech" => $tech, "featured" => $featured],
-                    "is_default" => true
+                    "source" => "json",
+                    "data"   => [
+                        "items"      => array_values($items),
+                        "total"      => $total,
+                        "page"       => $page,
+                        "totalPages" => max(1, (int)ceil($total / $perPage)),
+                        "filters"    => ["tech" => $tech, "featured" => $featured],
+                    ]
                 ];
             }
         }
@@ -246,56 +262,77 @@ class ProjectModel {
         /* ----------------------------
          * D. Hard fallback
          * ---------------------------- */
-        return $this->fallbackPaginated($page, $perPage, $tech, $featured);
+        app_log("ProjectModel getPaginatedProjects FALLBACK HIT", "debug");
+        return [
+            "source" => "fallback",
+            "data"   => $this->fallbackPaginated($page, $perPage, $tech, $featured)
+        ];
     }
 
 
     /* ============================================================
+     * Replace getAllTechStructured()
      * TECH LIST STRUCTURED — A → B → C → D
      * Returns: [ project_id => [ {project_id, tech_name, color_class}, ... ], ... ]
      * ============================================================ */
-    public function getAllTechStructured(): array
-    {
-        $cacheKey = "projects_tech_structured";
+    public function getTechBySource(string $source): array
+{
+    return match ($source) {
 
-        /* A. Cache */
-        if ($cached = CacheService::load($cacheKey)) {
-            return $cached;
+        "db" => $this->getTechFromDb(),
+
+        "json" => $this->getTechFromJson(),
+
+        default => [
+            "source" => "fallback",
+            "data"   => $this->defaultTechList()
+        ],
+    };
+}
+
+
+private function getTechFromDb(): array
+{
+    try {
+        $pdo = DB::getInstance()->pdo();
+        $stmt = $pdo->query(
+            "SELECT project_id, tech_name, color_class FROM project_tech ORDER BY id ASC"
+        );
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        if (empty($rows)) {
+            return ["source" => "fallback", "data" => $this->defaultTechList()];
         }
 
-        /* B. DB */
-        try {
-            $pdo = DB::getInstance()->pdo();
-            $stmt = $pdo->query("SELECT project_id, tech_name, color_class FROM project_tech ORDER BY id ASC");
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
-            $structured = [];
-            foreach ($rows as $r) {
-                $structured[(int)$r['project_id']][] = $r;
-            }
-
-            if (!empty($structured)) {
-                CacheService::save($cacheKey, $structured);
-                return $structured;
-            }
-        } catch (Throwable $e) {
-            app_log("ProjectModel getAllTechStructured DB ERROR: " . $e->getMessage(), "error");
+        $structured = [];
+        foreach ($rows as $r) {
+            $structured[(int)$r["project_id"]][] = $r;
         }
 
-        /* C. default JSON */
-        $jsonFile = safe_path('PROJECTS_TECHLIST_DEFAULT_FILE');
-        if ($jsonFile && file_exists($jsonFile)) {
-            $json = json_decode(file_get_contents($jsonFile), true);
-            if (!empty($json) && is_array($json)) {
-                // mark default and return (do not cache)
-                $json['is_default'] = true;
-                return $json;
-            }
-        }
+        return ["source" => "db", "data" => $structured];
 
-        /* D. fallback */
-        return $this->defaultTechList();
+    } catch (Throwable $e) {
+        app_log("getTechFromDb FAILED: ".$e->getMessage(), "error");
+        return ["source" => "fallback", "data" => $this->defaultTechList()];
     }
+}
+
+private function getTechFromJson(): array
+{
+    $jsonFile = safe_path("PROJECTS_TECHLIST_DEFAULT_FILE");
+
+    if (!$jsonFile || !file_exists($jsonFile)) {
+        return ["source" => "fallback", "data" => $this->defaultTechList()];
+    }
+
+    $json = json_decode(file_get_contents($jsonFile), true);
+    if (!is_array($json) || empty($json)) {
+        return ["source" => "fallback", "data" => $this->defaultTechList()];
+    }
+
+    return ["source" => "json", "data" => $json];
+}
+
 
 
     /* ============================================================
@@ -350,6 +387,7 @@ class ProjectModel {
     }
 
 
+
     /* ============================================================
      * HARD DEFAULT PROJECTS (guaranteed non-empty)
      * Use unique IDs (0..n) so tech mapping works
@@ -357,21 +395,6 @@ class ProjectModel {
     public function defaultProjects(): array
     {
         return [
-            [
-                "id" => 0,
-                "title" => "D Portfolio Website",
-                "slug"=> "personal-portfolio",
-                "short_desc"=> "Modern developer portfolio website",
-                "description" => "A modern developer portfolio built with PHP, MySQL, TailwindCSS and enterprise-level caching. Includes dynamic pages, models, controllers, and caching layers.",
-                "full_desc"=> "This project demonstrates a full MVC PHP architecture with routing, caching, controllers, models, and clean UI animations.",
-                "image_path" => "portfolio.png",
-                "cover_image"=> null,
-                "github_url"=> "https://github.com/Yogesh-Lilake/Portfolio",
-                "live_url"=> "https://github.com/Yogesh-Lilake/Portfolio",
-                "project_link" => "#",
-                "is_featured" => 1,
-                "sort_order" => 1
-            ],
             [
                 "id" => 1,
                 "title" => "Footwear E-Commerce Website",
@@ -389,6 +412,21 @@ class ProjectModel {
             ],
             [
                 "id" => 2,
+                "title" => "D Portfolio Website",
+                "slug"=> "personal-portfolio",
+                "short_desc"=> "Modern developer portfolio website",
+                "description" => "A modern developer portfolio built with PHP, MySQL, TailwindCSS and enterprise-level caching. Includes dynamic pages, models, controllers, and caching layers.",
+                "full_desc"=> "This project demonstrates a full MVC PHP architecture with routing, caching, controllers, models, and clean UI animations.",
+                "image_path" => "portfolio.png",
+                "cover_image"=> null,
+                "github_url"=> "https://github.com/Yogesh-Lilake/Portfolio",
+                "live_url"=> "https://github.com/Yogesh-Lilake/Portfolio",
+                "project_link" => "#",
+                "is_featured" => 1,
+                "sort_order" => 1
+            ],
+            [
+                "id" => 3,
                 "title" => "Android Expense Tracker",
                 "slug"=> "android-expense-tracker",
                 "short_desc"=> "",
@@ -403,7 +441,7 @@ class ProjectModel {
                 "sort_order" => 3
             ],
             [
-                "id" => 3,
+                "id" => 4,
                 "title" => "Online Quiz Platform",
                 "slug"=> "online-quiz-platform",
                 "short_desc"=> "",
@@ -418,7 +456,7 @@ class ProjectModel {
                 "sort_order" => 4
             ],
             [
-                "id" => 4,
+                "id" => 5,
                 "title" => "Weather Forecast Web App",
                 "slug"=> "weather-forecast",
                 "short_desc"=> "",
@@ -431,6 +469,21 @@ class ProjectModel {
                 "project_link" => "#",
                 "is_featured" => 0,
                 "sort_order" => 5
+            ],
+            [
+                "id" => 6,
+                "title" => "Library Management System",
+                "slug"=> "library-management",
+                "short_desc"=> "",
+                "description"=> "A PHP-MySQL platform for managing books, issuing, returning, and user activity logs.",
+                "full_desc"=> "",
+                "image_path"=> "library.png",
+                "cover_image"=> null,
+                "github_url"=> null,
+                "live_url"=> null,
+                "project_link" => "#",
+                "is_featured" => 0,
+                "sort_order" => 6
             ],
         ];
     }
@@ -445,31 +498,38 @@ class ProjectModel {
         $defaultColor = "bg-accent/20 text-accent";
 
         return [
-            0 => [
-                ["project_id" => 0, "tech_name" => "D PHP", "color_class" => $defaultColor],
-                ["project_id" => 0, "tech_name" => "MySQL", "color_class" => $defaultColor],
-                ["project_id" => 0, "tech_name" => "TailwindCSS", "color_class" => $defaultColor],
-                ["project_id" => 0, "tech_name" => "JavaScript", "color_class" => $defaultColor],
-            ],
             1 => [
-                ["project_id" => 1, "tech_name" => "PHP", "color_class" => $defaultColor],
-                ["project_id" => 1, "tech_name" => "REST API", "color_class" => $defaultColor],
+                ["project_id" => 1, "tech_name" => "D PHP", "color_class" => $defaultColor],
                 ["project_id" => 1, "tech_name" => "MySQL", "color_class" => $defaultColor],
+                ["project_id" => 1, "tech_name" => "Tailwind", "color_class" => $defaultColor],
+                ["project_id" => 1, "tech_name" => "JS", "color_class" => $defaultColor],
             ],
             2 => [
+                ["project_id" => 2, "tech_name" => "D HTML", "color_class" => $defaultColor],
+                ["project_id" => 2, "tech_name" => "Tailwind", "color_class" => $defaultColor],
+                ["project_id" => 2, "tech_name" => "JS", "color_class" => $defaultColor],
                 ["project_id" => 2, "tech_name" => "PHP", "color_class" => $defaultColor],
-                ["project_id" => 2, "tech_name" => "Chart.js", "color_class" => $defaultColor],
-                ["project_id" => 2, "tech_name" => "MySQL", "color_class" => $defaultColor],
             ],
             3 => [
-                ["project_id" => 3, "tech_name" => "PHP", "color_class" => $defaultColor],
-                ["project_id" => 3, "tech_name" => "JavaScript", "color_class" => $defaultColor],
-                ["project_id" => 3, "tech_name" => "MySQL", "color_class" => $defaultColor],
+                ["project_id" => 3, "tech_name" => "Java", "color_class" => $defaultColor],
+                ["project_id" => 3, "tech_name" => "SQLite", "color_class" => $defaultColor],
+                ["project_id" => 3, "tech_name" => "Android Studio", "color_class" => $defaultColor],
             ],
             4 => [
-                ["project_id" => 4, "tech_name" => "PHP", "color_class" => $defaultColor],
+                ["project_id" => 4, "tech_name" => "D PHP", "color_class" => $defaultColor],
                 ["project_id" => 4, "tech_name" => "MySQL", "color_class" => $defaultColor],
-                ["project_id" => 4, "tech_name" => "HTML/CSS", "color_class" => $defaultColor],
+                ["project_id" => 4, "tech_name" => "Javascript", "color_class" => $defaultColor],
+            ],
+            5 => [
+                ["project_id" => 5, "tech_name" => "HTML", "color_class" => $defaultColor],
+                ["project_id" => 5, "tech_name" => "CSS", "color_class" => $defaultColor],
+                ["project_id" => 5, "tech_name" => "JS", "color_class" => $defaultColor],
+                ["project_id" => 5, "tech_name" => "API", "color_class" => $defaultColor],
+            ],
+            6 => [
+                ["project_id" => 6, "tech_name" => "PHP", "color_class" => $defaultColor],
+                ["project_id" => 6, "tech_name" => "MySQL", "color_class" => $defaultColor],
+                ["project_id" => 6, "tech_name" => "Bootstrap", "color_class" => $defaultColor],
             ]
         ];
     }

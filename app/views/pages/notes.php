@@ -5,10 +5,11 @@
  */
 
 // Extract safely
-$notes        = $data["notes"]["data"]        ?? [];
-$categories   = $data["categories"]["data"]   ?? [];
-$tags         = $data["tags"]["data"]         ?? [];
-$pinned_notes = $data["pinned_notes"]["data"] ?? [];
+$notes        = $data["notes"]        ?? [];
+$categories   = $data["categories"]   ?? [];
+$tags         = $data["tags"]         ?? [];
+$pinned_notes = $data["pinned_notes"] ?? [];
+
 
 $safeMode = $data['safe_mode'] ?? false;
 
