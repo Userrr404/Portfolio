@@ -165,6 +165,7 @@ define('CV_LOG_FILE', LOGS_PATH . 'cv.log');
 define('STORAGE_PATH', ROOT_PATH . 'storage/');
 
 define('CACHE_PATH', STORAGE_PATH . 'cache/');
+define('CV_RATE_LIMIT_FILE', STORAGE_PATH . 'cv_rate_limit.json');
 
 /* ---------------------------------------------
    8. ASSETS (FILESYSTEM PATHS)

@@ -17,23 +17,23 @@ class ContactModel {
         $this->defaultHomeJson = safe_path('HOME_CONTACT_DEFAULT_FILE');
     }
 
-    public function get()
+    public function get(bool $pure = false): array
     {
-        /** ----------------------------------------------------
-         * A. TRY CACHE
-         * ----------------------------------------------------*/
-        if ($cache = CacheService::load($this->cacheKey)) {
-            return [
-                "source" => "cache",
-                "data"   => $cache
-            ];
-        }
+        return $pure ? $this->getOnlyDB() : $this->getFallbackMode();
+    }
 
-        /** ----------------------------------------------------
-         * B. TRY DATABASE
-         * ----------------------------------------------------*/
+    private function getOnlyDB(): array
+    {
         try {
             $pdo = DB::getInstance()->pdo();
+
+            if (!$pdo) {
+                app_log("DC-03: ContactModel@getOnlyDB DB unavailable", "error");
+                return [
+                    "source" => "empty",
+                    "data"   => []
+                ];
+            }
 
             $stmt = $pdo->prepare("
                 SELECT title, subtitle, button_text, button_link
@@ -43,41 +43,63 @@ class ContactModel {
             ");
             $stmt->execute();
 
-            $row = $stmt->fetch(PDO::FETCH_ASSOC) ? : [];
+            $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
             if (!empty($row)) {
-                CacheService::save($this->cacheKey, $row);
                 return [
                     "source" => "db",
                     "data"   => $row
                 ];
             }
 
+            return [
+                "source" => "empty",
+                "data"   => []
+            ];
+
         } catch (Throwable $e) {
             app_log("ContactModel@get DB error: " . $e->getMessage(), "error");
 
             return [
                 "source" => "error",
-                "data"   => $this->defaults()
+                "data"   => []
+            ];
+        }
+    }
+
+
+    private function getFallbackMode(): array
+    {
+        /** A. Cache */
+        if ($cache = CacheService::load($this->cacheKey)) {
+            return [
+                "source" => "cache",
+                "data"   => $cache
             ];
         }
 
-        /** ----------------------------------------------------
-         * C. TRY DEFAULT JSON FILE
-         * ----------------------------------------------------*/
-        if ($this->defaultHomeJson && file_exists($this->defaultHomeJson)) {
-            $json = json_decode(file_get_contents($this->defaultHomeJson), true);
-            if (!empty($json) && is_array($json)) {
-                return [
-                    "source" => "json",
-                    "data"   => $json
-                ];
+        /** B. DB */
+        $row = $this->getOnlyDB();
+        if ($row["source"] === "db") {
+            CacheService::save($this->cacheKey, $row["data"]);
+            return $row;
+        }
+
+        /** C. JSON DEFAULT (PRIMARY DC-03 FALLBACK) */
+        if ($row["source"] === "empty") {
+            if ($this->defaultHomeJson && file_exists($this->defaultHomeJson)) {
+                $json = json_decode(file_get_contents($this->defaultHomeJson), true);
+
+                if (!empty($json)) {
+                    return [
+                        "source" => "json",
+                        "data"   => $json
+                    ];
+                }
             }
         }
 
-        /** ----------------------------------------------------
-         * D. HARD-CODED DEFAULT FALLBACK
-         * ----------------------------------------------------*/
+        /** D. HARD FALLBACK */
         return [
             "source" => "fallback",
             "data"   => $this->defaults()
@@ -112,6 +134,12 @@ class ContactModel {
         // B. Try DB
         try {
             $pdo = DB::getInstance()->pdo();
+
+            if (!$pdo) {
+                app_log("DC-03: ContactModel {$cacheKey} DB unavailable", "error");
+                throw new \RuntimeException("DB unavailable");
+            }
+
             $stmt = $pdo->prepare($sql);
             $stmt->execute();
 
@@ -124,7 +152,7 @@ class ContactModel {
                 return ["source" => "db", "data" => $data];
             }
         } catch (Throwable $e) {
-            app_log("ContactModel DB error: ".$e->getMessage(), "error");
+            app_log("ContactModel {$cacheKey} DB error: ".$e->getMessage(), "error");
         }
 
         // C. JSON defaults (DC-02 path)

@@ -21,7 +21,7 @@ class HeaderData {
         "accent_color"
     ];
 
-    public function __construct($pdo = null)
+    public function __construct()
     {
         // CONFIG-SAFE (no fatal error if missing)
         $this->defaultHeaderPath = safe_path('HEADER_DEFAULT_FILE');
@@ -29,22 +29,23 @@ class HeaderData {
     }
 
     /* ============================================================
-       PUBLIC: RETURNS BULLETPROOF HEADER + NAV
+       PUBLIC API (MATCHES HomeModel)
     ============================================================ */
-    public function get()
+    public function get(): array
     {
         return [
-            "header" => $this->getHeader(),
-            "nav"    => $this->getNav()
+            "header" => $this->getHeaderFallback(),
+            "nav"    => $this->getNavFallback()
         ];
     }
 
     /* ============================================================
-       HEADER FETCH + FALLBACK CHAIN
+       HEADER — HOME MODEL PARITY
     ============================================================ */
-    private function getHeader(): array
+
+    private function getHeaderFallback(): array
     {
-        // 1. Cache
+        /** A. Cache */
         if ($cache = CacheService::load($this->cacheKeyHeader)) {
             return [
                 "source" => "cache",
@@ -52,33 +53,17 @@ class HeaderData {
             ];
         }
 
-        // 2. DB
-        try {
-            $db = DB::getInstance()->pdo();
-            $stmt = $db->query("SELECT * FROM header_settings WHERE is_active = 1 LIMIT 1");
-            $row = $stmt->fetch() ? : [];
-
-            if (!empty($row)) {
-                CacheService::save($this->cacheKeyHeader, $row);
-                return [
-                    "source" => "db",
-                    "data"   => $this->normalize($row)
-                ];
-            }
-        } catch (Throwable $e) {
-            app_log("HeaderData DB error: " . $e->getMessage(), "error");
-
-            return [
-                "source" => "error",
-                "data"   => $this->normalize($this->defaultHeader())
-            ];
+        /** B. DB */
+        $row = $this->getHeaderOnlyDB();
+        if ($row["source"] === "db") {
+            CacheService::save($this->cacheKeyHeader, $row["data"]);
+            return $row;
         }
 
-        // 3. Default JSON
+        /** C. JSON */
         if ($this->defaultHeaderPath && file_exists($this->defaultHeaderPath)) {
             $json = json_decode(file_get_contents($this->defaultHeaderPath), true);
-            
-            if(!empty($json)) {
+            if (!empty($json)) {
                 return [
                     "source" => "json",
                     "data"   => $this->normalize($json)
@@ -86,19 +71,61 @@ class HeaderData {
             }
         }
 
-        // 4. Hard-coded fallback
+        /** D. Hard fallback */
         return [
             "source" => "fallback",
             "data"   => $this->normalize($this->defaultHeader())
         ];
     }
 
-    /* ============================================================
-       NAVIGATION FETCH + FALLBACK CHAIN
-    ============================================================ */
-    private function getNav(): array
+    private function getHeaderOnlyDB(): array
     {
-        // 1. Cache
+        try {
+            $pdo = DB::getInstance()->pdo();
+
+            if (!$pdo) {
+                app_log("DC-03: HeaderService@getHeaderOnlyDB DB unavailable", "error");
+                return [
+                    "source" => "empty",
+                    "data"   => []
+                ];
+            }
+
+            $stmt = $pdo->query(
+                "SELECT * FROM header_settings WHERE is_active = 1 LIMIT 1"
+            );
+
+            $row = $stmt->fetch() ?: [];
+
+            if (!empty($row)) {
+                return [
+                    "source" => "db",
+                    "data"   => $this->normalize($row)
+                ];
+            }
+
+            return [
+                "source" => "empty",
+                "data"   => []
+            ];
+
+        } catch (Throwable $e) {
+            app_log("HeaderData DB error: " . $e->getMessage(), "error");
+
+            return [
+                "source" => "error",
+                "data"   => []
+            ];
+        }
+    }
+
+    /* ============================================================
+       NAV — SAME STATE MACHINE
+    ============================================================ */
+
+    private function getNavFallback(): array
+    {
+        /** A. Cache */
         if ($cache = CacheService::load($this->cacheKeyNav)) {
             return [
                 "source" => "cache",
@@ -106,31 +133,16 @@ class HeaderData {
             ];
         }
 
-        // 2. DB
-        try {
-            $pdo = DB::getInstance()->pdo();
-            $stmt = $pdo->query("SELECT label, url FROM navigation_links WHERE is_active = 1 ORDER BY order_no ASC");
-            $rows = $stmt->fetchAll() ? : [];
-
-            if (!empty($rows)) {
-                CacheService::save($this->cacheKeyNav, $rows);
-                return [
-                    "source" => "db",
-                    "data"   => $rows
-                ];
-            }
-        } catch (Throwable $e) {
-            app_log("HeaderData NAV DB error: " . $e->getMessage(), "error");
-            return [
-                "source" => "error",
-                "data"   => $this->defaultNav()
-            ];
+        /** B. DB */
+        $rows = $this->getNavOnlyDB();
+        if ($rows["source"] === "db") {
+            CacheService::save($this->cacheKeyNav, $rows["data"]);
+            return $rows;
         }
 
-        // 3. Default JSON
+        /** C. JSON */
         if ($this->defaultNavPath && file_exists($this->defaultNavPath)) {
             $json = json_decode(file_get_contents($this->defaultNavPath), true);
-
             if (!empty($json)) {
                 return [
                     "source" => "json",
@@ -139,11 +151,53 @@ class HeaderData {
             }
         }
 
-        // 4. Hardcoded fallback
+        /** D. Hard fallback */
         return [
             "source" => "fallback",
             "data"   => $this->defaultNav()
         ];
+    }
+
+    private function getNavOnlyDB(): array
+    {
+        try {
+            $pdo = DB::getInstance()->pdo();
+
+            if (!$pdo) {
+                app_log("DC-03: HeaderService@getNavOnlyDB DB unavailable", "error");
+                return [
+                    "source" => "empty",
+                    "data"   => []
+                ];
+            }
+
+            $stmt = $pdo->query(
+                "SELECT label, url FROM navigation_links
+                 WHERE is_active = 1 ORDER BY order_no ASC"
+            );
+
+            $rows = $stmt->fetchAll() ?: [];
+
+            if (!empty($rows)) {
+                return [
+                    "source" => "db",
+                    "data"   => $rows
+                ];
+            }
+
+            return [
+                "source" => "empty",
+                "data"   => []
+            ];
+
+        } catch (Throwable $e) {
+            app_log("HeaderData NAV DB error: " . $e->getMessage(), "error");
+
+            return [
+                "source" => "error",
+                "data"   => []
+            ];
+        }
     }
 
     /* ============================================================
@@ -164,7 +218,7 @@ class HeaderData {
     private function defaultNav(): array
     {
         return [
-            ["label" => "Home",    "url" => HOME_URL_NO_BASE],
+            ["label" => "DHome",    "url" => HOME_URL_NO_BASE],
             ["label" => "About",   "url" => ABOUT_URL_NO_BASE],
             ["label" => "Projects","url" => PROJECTS_URL_NO_BASE],
             ["label" => "Notes",    "url" => NOTES_URL_NO_BASE],

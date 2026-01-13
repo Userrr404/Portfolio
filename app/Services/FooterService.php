@@ -30,205 +30,191 @@ class FooterData
     }
 
     /* ============================================================
-       PUBLIC API (MATCHES HomeModel / HeaderData)
+       PUBLIC API (HomeModel-style)
     ============================================================ */
     public function get(): array
     {
         return [
-            "footer" => $this->getFooter(),
-            "links"  => $this->getLinks(),
-            "social" => $this->getSocial()
+            "footer" => $this->getFooterFallbackMode(),
+            "links"  => $this->getLinksFallbackMode(),
+            "social" => $this->getSocialFallbackMode(),
         ];
     }
 
     /* ============================================================
        FOOTER SETTINGS
     ============================================================ */
-    private function getFooter(): array
+
+    private function getFooterOnlyDB(): array
     {
-        /** A. Cache */
-        if ($cache = CacheService::load($this->cacheKeyFooter)) {
-
-            return [
-                "source" => "cache",
-                "data"   => $this->normalizeFooter($cache)
-            ];
-        }
-
-        /** B. DB */
         try {
             $pdo = DB::getInstance()->pdo();
-            $stmt = $pdo->query("SELECT * FROM footer_settings WHERE is_active = 1 LIMIT 1");
-            $row  = $stmt->fetch() ?: [];
+
+            if (!$pdo) {
+                app_log("DC-03: FooterService@getFooterOnlyDB DB unavailable", "error");
+                return ["source" => "empty", "data" => []];
+            }
+
+            $stmt = $pdo->query(
+                "SELECT * FROM footer_settings WHERE is_active = 1 LIMIT 1"
+            );
+            $row = $stmt->fetch() ?: [];
 
             if (!empty($row)) {
-                CacheService::save($this->cacheKeyFooter, $row);
-
-                return [
-                    "source" => "db",
-                    "data"   => $this->normalizeFooter($row)
-                ];
+                return ["source" => "db", "data" => $this->normalizeFooter($row)];
             }
+
+            return ["source" => "empty", "data" => []];
 
         } catch (Throwable $e) {
-            app_log("FooterData@getFooter DB error: " . $e->getMessage(), "error");
+            app_log("FooterData@getFooter DB error: ".$e->getMessage(), "error");
+            return ["source" => "error", "data" => []];
+        }
+    }
 
-            return [
-                "source" => "error",
-                "data"   => $this->normalizeFooter($this->defaultFooter())
-            ];
+    private function getFooterFallbackMode(): array
+    {
+        if ($cache = CacheService::load($this->cacheKeyFooter)) {
+            return ["source" => "cache", "data" => $this->normalizeFooter($cache)];
         }
 
-        /** C. Default JSON */
-        if ($this->defaultFooterPath && file_exists($this->defaultFooterPath)) {
+        $row = $this->getFooterOnlyDB();
+        if ($row["source"] === "db") {
+            CacheService::save($this->cacheKeyFooter, $row["data"]);
+            return $row;
+        }
+
+        if ($row["source"] === "empty" && $this->defaultFooterPath && file_exists($this->defaultFooterPath)) {
             $json = json_decode(file_get_contents($this->defaultFooterPath), true);
-
             if (!empty($json)) {
-
-                return [
-                    "source" => "json",
-                    "data"   => $this->normalizeFooter($json)
-                ];
+                return ["source" => "json", "data" => $this->normalizeFooter($json)];
             }
         }
 
-        /** D. Hard fallback */
-        return [
-            "source" => "fallback",
-            "data"   => $this->normalizeFooter($this->defaultFooter())
-        ];
+        return ["source" => "fallback", "data" => $this->normalizeFooter($this->defaultFooter())];
     }
 
     /* ============================================================
        FOOTER QUICK LINKS
     ============================================================ */
-    private function getLinks(): array
+
+    private function getLinksOnlyDB(): array
     {
-        /** A. Cache */
-        if ($cache = CacheService::load($this->cacheKeyLinks)) {
-
-            return [
-                "source" => "cache",
-                "data"   => $cache
-            ];
-        }
-
-        /** B. DB */
         try {
             $pdo = DB::getInstance()->pdo();
+            if (!$pdo) {
+                app_log("DC-03: FooterService@getLinksOnlyDB DB unavailable", "error");
+                return ["source" => "empty", "data" => []];
+            }
             $stmt = $pdo->query("
                 SELECT label, url
                 FROM navigation_links
                 WHERE is_active = 1
                 ORDER BY order_no ASC
             ");
-
             $rows = $stmt->fetchAll() ?: [];
 
             if (!empty($rows)) {
-                CacheService::save($this->cacheKeyLinks, $rows);
-
-                return [
-                    "source" => "db",
-                    "data"   => $rows
-                ];
+                return ["source" => "db", "data" => $rows];
             }
+
+            return ["source" => "empty", "data" => []];
 
         } catch (Throwable $e) {
-            app_log("FooterData@getLinks DB error: " . $e->getMessage(), "error");
+            app_log("FooterData@getLinks DB error: ".$e->getMessage(), "error");
+            return ["source" => "error", "data" => []];
+        }
+    }
 
-            return [
-                "source" => "error",
-                "data"   => $this->defaultLinks()
-            ];
+    private function getLinksFallbackMode(): array
+    {
+        if ($cache = CacheService::load($this->cacheKeyLinks)) {
+            return ["source" => "cache", "data" => $cache];
         }
 
-        /** C. Default JSON */
-        if ($this->defaultLinksPath && file_exists($this->defaultLinksPath)) {
+        $row = $this->getLinksOnlyDB();
+        if ($row["source"] === "db") {
+            CacheService::save($this->cacheKeyLinks, $row["data"]);
+            return $row;
+        }
+
+        if ($row["source"] === "empty" && $this->defaultLinksPath && file_exists($this->defaultLinksPath)) {
             $json = json_decode(file_get_contents($this->defaultLinksPath), true);
-
             if (!empty($json)) {
-
-                return [
-                    "source" => "json",
-                    "data"   => $json
-                ];
+                return ["source" => "json", "data" => $json];
             }
         }
 
-        /** D. Hard fallback */
-        return [
-            "source" => "fallback",
-            "data"   => $this->defaultLinks()
-        ];
+        return ["source" => "fallback", "data" => $this->defaultLinks()];
     }
 
     /* ============================================================
        SOCIAL LINKS
     ============================================================ */
-    private function getSocial(): array
+
+    private function getSocialOnlyDB(): array
     {
-        /** A. Cache */
-        if ($cache = CacheService::load($this->cacheKeySocial)) {
-
-            return [
-                "source" => "cache",
-                "data"   => $cache
-            ];
-        }
-
-        /** B. DB */
         try {
             $pdo = DB::getInstance()->pdo();
+            if (!$pdo) {
+                app_log("DC-03: FooterService@getSocialOnlyDB DB unavailable", "error");
+                return ["source" => "empty", "data" => []];
+            }
             $stmt = $pdo->query("
                 SELECT platform, url, icon_class
                 FROM social_links
                 WHERE is_active = 1
             ");
-
             $rows = $stmt->fetchAll() ?: [];
 
             if (!empty($rows)) {
-                CacheService::save($this->cacheKeySocial, $rows);
-
-                return [
-                    "source" => "db",
-                    "data"   => $rows
-                ];
+                return ["source" => "db", "data" => $rows];
             }
 
+            return ["source" => "empty", "data" => []];
 
         } catch (Throwable $e) {
-            app_log("FooterData@getSocial DB error: " . $e->getMessage(), "error");
+            app_log("FooterData@getSocial DB error: ".$e->getMessage(), "error");
+            return ["source" => "error", "data" => []];
+        }
+    }
 
+    private function getSocialFallbackMode(): array
+    {
+        if ($cache = CacheService::load($this->cacheKeySocial)) {
             return [
-                "source" => "error",
-                "data"   => $this->defaultSocial()
+                "source" => "cache", 
+                "data" => $cache
             ];
         }
 
-        /** C. Default JSON */
-        if ($this->defaultSocialPath && file_exists($this->defaultSocialPath)) {
+        $row = $this->getSocialOnlyDB();
+        if ($row["source"] === "db") {
+            CacheService::save($this->cacheKeySocial, $row["data"]);
+            return $row;
+        }
+
+        if ($row["source"] === "empty" && $this->defaultSocialPath && file_exists($this->defaultSocialPath)) {
             $json = json_decode(file_get_contents($this->defaultSocialPath), true);
 
             if (!empty($json)) {
 
                 return [
-                    "source" => "json",
-                    "data"   => $json
+                    "source" => "json", 
+                    "data" => $json
                 ];
             }
         }
 
         /** D. Hard fallback */
         return [
-            "source" => "fallback",
-            "data"   => $this->defaultSocial()
+            "source" => "fallback", 
+            "data" => $this->defaultSocial()
         ];
     }
 
     /* ============================================================
-       DEFAULTS
+       DEFAULTS + NORMALIZATION
     ============================================================ */
     private function defaultFooter(): array
     {

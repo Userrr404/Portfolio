@@ -23,7 +23,8 @@ class DB
 
         } catch (PDOException $e) {
             app_log("DB CONNECTION FAILED: " . $e->getMessage(), "error");
-            throw new \Exception("Database connection failed.");
+            // throw new \Exception("Database connection failed.");
+            $this->pdo = null;
         }
     }
 
@@ -32,13 +33,19 @@ class DB
         return self::$instance ??= new DB();
     }
 
-    public function pdo(): PDO
+    public function pdo(): ?PDO
     {
+        if ($this->pdo === null) {
+            return null;
+        }
+
         try {
             $this->pdo->query("SELECT 1");
         } catch (Throwable $e) {
-            app_log("DB AUTO-RECONNECT: " . $e->getMessage(), "warning");
-            self::$instance = new DB();
+            app_log("DB LOST CONNECTION: " . $e->getMessage(), "warning");
+            // self::$instance = new DB();
+            $this->pdo = null;
+            return null;
         }
 
         return $this->pdo;

@@ -19,10 +19,59 @@ class ProjectModel {
     /* ============================================================
     * FEATURED PROJECTS (Home page)
     * ============================================================ */
-    public function getFeatured(): array
+    public function getFeatured(bool $pure = false): array
+    {
+        return $pure ? $this->getFeaturedOnlyDB() : $this->getFeaturedFallbackMode();
+    }
+
+    private function getFeaturedOnlyDB(): array
+    {
+        try {
+            $pdo = DB::getInstance()->pdo();
+
+            if (!$pdo) {
+                app_log("DC-03: ProjectModel@getFeatured DB unavailable", "error");
+                return [
+                    "source" => "empty",
+                    "data"   => []
+                ];
+            }
+
+            $stmt = $pdo->query(
+                "SELECT * FROM projects
+                WHERE is_active = 1 AND is_featured = 1
+                ORDER BY sort_order ASC"
+            );
+
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+            if (!empty($rows)) {
+                return [
+                    "source" => "db",
+                    "data"   => $rows
+                ];
+            }
+
+            return [
+                "source" => "empty",
+                "data"   => []
+            ];
+
+        } catch (Throwable $e) {
+            app_log("ProjectModel@getFeatured DB error: " . $e->getMessage(), "error");
+
+            return [
+                "source" => "error",
+                "data"   => []
+            ];
+        }
+    }
+
+    private function getFeaturedFallbackMode(): array
     {
         $cacheKey = "featured_projects";
 
+        /** A. Cache */
         if ($cache = CacheService::load($cacheKey)) {
             return [
                 "source" => "cache",
@@ -30,43 +79,28 @@ class ProjectModel {
             ];
         }
 
-        try {
-            $pdo = DB::getInstance()->pdo();
-            $stmt = $pdo->query("SELECT * FROM projects WHERE is_active = 1 AND is_featured = 1 ORDER BY sort_order ASC");
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ? : [];
-
-            if (!empty($rows)) {
-                CacheService::save($cacheKey, $rows);
-
-                return [
-                    "source" => "db",
-                    "data"   => $rows
-                ];
-            }
-
-        } catch (Throwable $e) {
-            app_log("ProjectModel@getFeatured DB ERROR: " . $e->getMessage(), "error");
-
-            return [
-                "source" => "error",
-                "data"   => $this->defaultFeatured()
-            ];
+        /** B. DB */
+        $row = $this->getFeaturedOnlyDB();
+        if ($row["source"] === "db") {
+            CacheService::save($cacheKey, $row["data"]);
+            return $row;
         }
 
-        /** ----------------------------------------------------
-        * C. TRY DEFAULT JSON FILE
-        * ----------------------------------------------------*/
-        if ($this->defaultPath && file_exists($this->defaultPath)) {
-            $json = json_decode(file_get_contents($this->defaultPath), true);
-            if (!empty($json)) {
-                return [
-                    "source" => "json",
-                    "data"   => $json
-                ];
+        /** C. JSON DEFAULT (PRIMARY FALLBACK) */
+        if ($row["source"] === "empty") {
+            if ($this->defaultPath && file_exists($this->defaultPath)) {
+                $json = json_decode(file_get_contents($this->defaultPath), true);
+
+                if (!empty($json)) {
+                    return [
+                        "source" => "json",
+                        "data"   => $json
+                    ];
+                }
             }
         }
 
-        /* ---------- HARD FALLBACK ---------- */
+        /** D. HARD FALLBACK */
         return [
             "source" => "fallback",
             "data"   => $this->defaultFeatured()
@@ -156,6 +190,11 @@ class ProjectModel {
         try {
             $pdo = DB::getInstance()->pdo();
 
+            if (!$pdo) {
+                app_log("DC-03: ProjectModel paginated peojects DB unavailable", "error");
+                throw new \RuntimeException("DB unavailable");
+            }
+
             $where = "WHERE p.is_active = 1";
             $bind  = [];
             $join  = "";
@@ -215,10 +254,6 @@ class ProjectModel {
         } catch (Throwable $e) {
             app_log("ProjectModel getPaginatedProjects DB ERROR: " . $e->getMessage(), "error");
 
-            return [
-                "source" => "error",
-                "data"   => $this->fallbackPaginated($page, $perPage, $tech, $featured)
-            ];
         }
 
         /* ----------------------------
@@ -276,62 +311,68 @@ class ProjectModel {
      * Returns: [ project_id => [ {project_id, tech_name, color_class}, ... ], ... ]
      * ============================================================ */
     public function getTechBySource(string $source): array
-{
-    return match ($source) {
+    {
+        return match ($source) {
 
-        "db" => $this->getTechFromDb(),
+            "db" => $this->getTechFromDb(),
 
-        "json" => $this->getTechFromJson(),
+            "json" => $this->getTechFromJson(),
 
-        default => [
-            "source" => "fallback",
-            "data"   => $this->defaultTechList()
-        ],
-    };
-}
+            default => [
+                "source" => "fallback",
+                "data"   => $this->defaultTechList()
+            ],
+        };
+    }
 
 
-private function getTechFromDb(): array
-{
-    try {
-        $pdo = DB::getInstance()->pdo();
-        $stmt = $pdo->query(
-            "SELECT project_id, tech_name, color_class FROM project_tech ORDER BY id ASC"
-        );
+    private function getTechFromDb(): array
+    {
+        try {
+            $pdo = DB::getInstance()->pdo();
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        if (empty($rows)) {
+            if (!$pdo) {
+                app_log("DC-03: ProjectModel tech DB unavailable", "error");
+                throw new \RuntimeException("DB unavailable");
+            }
+
+            $stmt = $pdo->query(
+                "SELECT project_id, tech_name, color_class FROM project_tech ORDER BY id ASC"
+            );
+
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            if (empty($rows)) {
+                return ["source" => "fallback", "data" => $this->defaultTechList()];
+            }
+
+            $structured = [];
+            foreach ($rows as $r) {
+                $structured[(int)$r["project_id"]][] = $r;
+            }
+
+            return ["source" => "db", "data" => $structured];
+
+        } catch (Throwable $e) {
+            app_log("getTechFromDb FAILED: ".$e->getMessage(), "error");
+            return ["source" => "fallback", "data" => $this->defaultTechList()];
+        }
+    }
+
+    private function getTechFromJson(): array
+    {
+        $jsonFile = safe_path("PROJECTS_TECHLIST_DEFAULT_FILE");
+
+        if (!$jsonFile || !file_exists($jsonFile)) {
             return ["source" => "fallback", "data" => $this->defaultTechList()];
         }
 
-        $structured = [];
-        foreach ($rows as $r) {
-            $structured[(int)$r["project_id"]][] = $r;
+        $json = json_decode(file_get_contents($jsonFile), true);
+        if (!is_array($json) || empty($json)) {
+            return ["source" => "fallback", "data" => $this->defaultTechList()];
         }
 
-        return ["source" => "db", "data" => $structured];
-
-    } catch (Throwable $e) {
-        app_log("getTechFromDb FAILED: ".$e->getMessage(), "error");
-        return ["source" => "fallback", "data" => $this->defaultTechList()];
+        return ["source" => "json", "data" => $json];
     }
-}
-
-private function getTechFromJson(): array
-{
-    $jsonFile = safe_path("PROJECTS_TECHLIST_DEFAULT_FILE");
-
-    if (!$jsonFile || !file_exists($jsonFile)) {
-        return ["source" => "fallback", "data" => $this->defaultTechList()];
-    }
-
-    $json = json_decode(file_get_contents($jsonFile), true);
-    if (!is_array($json) || empty($json)) {
-        return ["source" => "fallback", "data" => $this->defaultTechList()];
-    }
-
-    return ["source" => "json", "data" => $json];
-}
 
 
 
@@ -535,51 +576,57 @@ private function getTechFromJson(): array
     }
 
     public function getBySlug(string $slug): ?array
-{
-    $cacheKey = "project_slug_" . $slug;
+    {
+        $cacheKey = "project_slug_" . $slug;
 
-    if ($cache = CacheService::load($cacheKey)) {
-        return $cache;
-    }
-
-    try {
-        $pdo = DB::getInstance()->pdo();
-        $stmt = $pdo->prepare("
-            SELECT * 
-            FROM projects 
-            WHERE slug = :slug AND is_active = 1 
-            LIMIT 1
-        ");
-        $stmt->execute(['slug' => $slug]);
-        $project = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($project) {
-            CacheService::save($cacheKey, $project);
-            return $project;
+        if ($cache = CacheService::load($cacheKey)) {
+            return $cache;
         }
-    } catch (Throwable $e) {
-        app_log("ProjectModel@getBySlug DB ERROR: " . $e->getMessage(), "error");
-    }
 
-    // JSON fallback
-    $jsonFile = safe_path('PROJECTS_DEFAULT_FILE');
-    if ($jsonFile && file_exists($jsonFile)) {
-        $json = json_decode(file_get_contents($jsonFile), true);
-        foreach ($json as $p) {
+        try {
+            $pdo = DB::getInstance()->pdo();
+
+            if (!$pdo) {
+                app_log("DC-03: ProjectModel@getBySlug DB unavailable", "error");
+                throw new \RuntimeException("DB unavailable");
+            }
+        
+            $stmt = $pdo->prepare("
+                SELECT * 
+                FROM projects 
+                WHERE slug = :slug AND is_active = 1 
+                LIMIT 1
+            ");
+            $stmt->execute(['slug' => $slug]);
+            $project = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($project) {
+                CacheService::save($cacheKey, $project);
+                return $project;
+            }
+        } catch (Throwable $e) {
+            app_log("ProjectModel@getBySlug DB ERROR: " . $e->getMessage(), "error");
+        }
+
+        // JSON fallback
+        $jsonFile = safe_path('PROJECTS_DEFAULT_FILE');
+        if ($jsonFile && file_exists($jsonFile)) {
+            $json = json_decode(file_get_contents($jsonFile), true);
+            foreach ($json as $p) {
+                if (($p['slug'] ?? '') === $slug) {
+                    return $p;
+                }
+            }
+        }
+
+        //  C. HARD FALLBACK
+        foreach ($this->defaultProjects() as $p) {
             if (($p['slug'] ?? '') === $slug) {
                 return $p;
             }
         }
-    }
 
-    // ✅ C. HARD FALLBACK
-    foreach ($this->defaultProjects() as $p) {
-        if (($p['slug'] ?? '') === $slug) {
-            return $p;
-        }
+        return null;
     }
-
-    return null;
-}
 
 }

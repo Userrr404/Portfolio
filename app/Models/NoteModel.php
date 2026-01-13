@@ -49,6 +49,11 @@ class NoteModel
         try {
             $pdo = DB::getInstance()->pdo();
 
+            if (!$pdo) {
+                app_log("DC-03: NoteModel@getAllNotes DB unavailable", "error");
+                throw new \RuntimeException("DB unavailable");
+            }
+
             $stmt = $pdo->prepare("
                 SELECT 
                     n.*,
@@ -73,11 +78,7 @@ class NoteModel
 
         } catch (Throwable $e) {
             app_log("NoteModel@getAllNotes error: " . $e->getMessage(), "error");
-
-            return [
-                "source" => "error",
-                "data"   => $this->defaultNotes()
-            ];
+            //  treat as empty → JSON allowed
         }
 
         // C. Try default JSON
@@ -175,6 +176,11 @@ class NoteModel
             try {
                 $pdo = DB::getInstance()->pdo();
 
+                if (!$pdo) {
+                    app_log("DC-03: NoteModel {$label} DB unavailable", "error");
+                    throw new \RuntimeException("DB unavailable");
+                }
+
                 $rows = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) ? : [];
 
                 if (!empty($rows)) {
@@ -185,7 +191,7 @@ class NoteModel
                     ];
                 }
             } catch (Throwable $e) {
-                app_log("$label DB ERROR: " . $e->getMessage(), "error");
+                app_log("NoteModel $label DB ERROR: " . $e->getMessage(), "error");
             }
         }
 

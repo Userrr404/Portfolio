@@ -36,9 +36,55 @@ class AboutModel {
      * Basic single-record loader for about_section
      * (This is separate from unified loader for legacy compatibility)
     */
-    public function get()
+    public function get(bool $pure = false): array
     {
-        // Try cache first
+        // PURE MODE → DB ONLY (no fallback mixing)
+        if ($pure) {
+            try {
+                $pdo = DB::getInstance()->pdo();
+
+                //  DC-03: DB down = EMPTY (not error)
+                if (!$pdo) {
+                    app_log("DC-03: AboutModel@get DB unavailable", "error");
+                    return [
+                        "source" => "empty",
+                        "data"   => []
+                    ];
+                }
+
+                $stmt = $pdo->prepare("SELECT * FROM about_section WHERE is_active = 1 LIMIT 1");
+                $stmt->execute();
+
+                $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+                if (!empty($row)) {
+                    CacheService::save($this->cacheKey, $row);
+                    return [
+                        "source" => "db",
+                        "data"   => $row
+                    ];
+                }
+
+                return [
+                    "source" => "empty",
+                    "data"   => []
+                ];
+
+            } catch (Throwable $e) {
+                app_log("AboutModel@get DB error: " . $e->getMessage(), "error");
+
+                return [
+                    "source" => "error",
+                    "data"   => []
+                ];
+            }
+        }
+
+        /* ============================================================
+        * FALLBACK MODE (IDENTICAL TO HomeModel)
+        * ============================================================ */
+
+        /** A. Cache */
         if ($cache = CacheService::load($this->cacheKey)) {
             return [
                 "source" => "cache",
@@ -46,51 +92,32 @@ class AboutModel {
             ];
         }
 
-        try {
-            // DB query
-            $pdo = DB::getInstance()->pdo();
-            $stmt = $pdo->prepare("SELECT * FROM about_section WHERE is_active = 1 LIMIT 1");
-            $stmt->execute();
-            $row = $stmt->fetch(PDO::FETCH_ASSOC) ? : [];
-
-            // Only save when DB returns valid data
-            if (!empty($row)) {
-                CacheService::save($this->cacheKey, $row);
-                return [
-                    "source" => "db",
-                    "data"   => $row
-                ];
-            }
-
-        } catch (Throwable $e) {
-            app_log("AboutModel@get DB error: " . $e->getMessage(), "error");
-
-            return [
-                "source" => "error",
-                "data"   => $this->defaults()
-            ];
+        /** B. DB */
+        $row = $this->get(true);
+        if ($row["source"] === "db") {
+            CacheService::save($this->cacheKey, $row["data"]);
+            return $row;
         }
 
-        /** ----------------------------------------------------
-        * C. TRY DEFAULT JSON FILE
-        * ----------------------------------------------------*/
-        if ($this->defaultPath && file_exists($this->defaultPath)) {
-            $json = json_decode(file_get_contents($this->defaultPath), true);
-            if (!empty($json) && is_array($json)) {
-                return [
-                    "source" => "json",
-                    "data"   => $json
-                ];
+        /** C. JSON DEFAULT (PRIMARY FALLBACK) */
+        if ($row["source"] === "empty") {
+            if ($this->defaultPath && file_exists($this->defaultPath)) {
+                $json = json_decode(file_get_contents($this->defaultPath), true);
+
+                if (!empty($json)) {
+                    return [
+                        "source" => "json",
+                        "data"   => $json
+                    ];
+                }
             }
         }
 
-        /** ----------------------------------------------------
-        * D. HARD-CODED FALLBACK
-        * ----------------------------------------------------*/
+        /** D. HARD FALLBACK */
         return [
             "source" => "fallback",
             "data"   => $this->defaults()
-        ];
+            ];
     }
 
     /* ============================================================
@@ -111,7 +138,8 @@ class AboutModel {
      * @param callable  $fallbackFn         Function returning default PHP data
      * @param bool      $single             If true → LIMIT 1, else → fetchAll()
     */
-    private function loadUnified(string $cacheKey, string $table, string $jsonPathConst, callable $fallbackFn, bool $single = false): array {
+    private function loadUnified(string $cacheKey, string $table, string $jsonPathConst, callable $fallbackFn, bool $single = false): array 
+    {
         
         /** ----------------------------------------------------
          * A. Check cache
@@ -128,6 +156,12 @@ class AboutModel {
          * ---------------------------------------------------- */
         try {
             $pdo = DB::getInstance()->pdo();
+
+            // DC-03: DB down = Empty
+            if (!$pdo) {
+                app_log("DC-03: AboutModel DB unavailable for {$table}", "error");
+                throw new \RuntimeException("DB unavilable");
+            }
 
             if ($single) {
                 // Load one row
@@ -153,10 +187,10 @@ class AboutModel {
         } catch (Throwable $e) {
             app_log("AboutModel DB error {$table}: " . $e->getMessage(), "error");
 
-            return [
-                "source" => "error",
-                "data"   => $fallbackFn()
-            ];
+            // return [
+            //     "source" => "error",
+            //     "data"   => $fallbackFn()
+            // ];
         }
 
         /** ----------------------------------------------------

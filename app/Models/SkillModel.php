@@ -17,23 +17,26 @@ class SkillModel {
         $this->defaultJson = safe_path('HOME_SKILLS_DEFAULT_FILE');
     }    
     
-    public function all()
+    public function all(bool $pure = false): array
     {
-        /** ----------------------------------------------------
-         * A. TRY CACHE
-         * ----------------------------------------------------*/
-        if ($cache = CacheService::load($this->cacheKey)) {
-            return [
-                "source" => "cache",
-                "data"   => $cache
-            ];
-        }
+        return $pure ? $this->getOnlyDB() : $this->getFallbackMode();
+    }
 
-        /** ----------------------------------------------------
-         * B. TRY DATABASE
-         * ----------------------------------------------------*/
+    /* ============================================================
+     * DB ONLY (NO FALLBACK MIXING)
+     * ============================================================ */
+    private function getOnlyDB(): array
+    {
         try {
             $pdo = DB::getInstance()->pdo();
+
+            if (!$pdo) {
+                app_log("DC-03: SkillModel@getOnlyDB DB unavailable", "error");
+                return [
+                    "source" => "empty",
+                    "data"   => []
+                ];
+            }
 
             $stmt = $pdo->prepare("
                 SELECT skill_name, icon_class, color_class
@@ -43,37 +46,62 @@ class SkillModel {
             ");
             $stmt->execute();
 
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ? : [];
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-            // Only if DB returned real data
             if (!empty($rows)) {
                 CacheService::save($this->cacheKey, $rows);
                 return [
-                    "source" => "database",
+                    "source" => "db",
                     "data"   => $rows
                 ];
             }
+
+            return [
+                "source" => "empty",
+                "data"   => []
+            ];
 
         } catch (Throwable $e) {
             app_log("SkillModel@all DB error: " . $e->getMessage(), "error");
 
             return [
                 "source" => "error",
-                "data"   => $this->defaults()
+                "data"   => []
+            ];
+        }
+    }
+
+    /* ============================================================
+     * FALLBACK MODE — IDENTICAL TO HomeModel
+     * ============================================================ */
+    private function getFallbackMode(): array
+    {
+        /** A. Cache */
+        if ($cache = CacheService::load($this->cacheKey)) {
+            return [
+                "source" => "cache",
+                "data"   => $cache
             ];
         }
 
-        /** ----------------------------------------------------
-         * C. TRY DEFAULT JSON FILE
-         * ----------------------------------------------------*/
-        if ($this->defaultJson && file_exists($this->defaultJson)) {
-            $json = json_decode(file_get_contents($this->defaultJson), true);
+        /** B. DB */
+        $row = $this->getOnlyDB();
+        if ($row["source"] === "db") {
+            CacheService::save($this->cacheKey, $row["data"]);
+            return $row;
+        }
 
-            if (!empty($json) && is_array($json)) {
-                return [
-                    "source" => "json",
-                    "data"   => $json
-                ];
+        /** C. JSON DEFAULT (PRIMARY FALLBACK) */
+        if ($row["source"] === "empty") {
+            if ($this->defaultJson && file_exists($this->defaultJson)) {
+                $json = json_decode(file_get_contents($this->defaultJson), true);
+
+                if (!empty($json) && is_array($json)) {
+                    return [
+                        "source" => "json",
+                        "data"   => $json
+                    ];
+                }
             }
         }
 
@@ -94,7 +122,7 @@ class SkillModel {
         return [
             [
                 "is_default"  => true,
-                "skill_name"  => "HTML5",
+                "skill_name"  => "DHTML5",
                 "icon_class"  => "fa-brands fa-html5",
                 "color_class" => "text-orange-500"
             ],

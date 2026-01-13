@@ -34,6 +34,15 @@ class HomeModel
         // 2. DB FETCH
         try {
             $pdo = DB::getInstance()->pdo();
+
+            if (!$pdo) {
+                app_log("DC-03: HomeModel@get DB unavailable", "error");
+                return [
+                    "source" => "empty",
+                    "data"   => []
+                ];
+            }
+
             $stmt = $pdo->query("SELECT * FROM home_section WHERE is_active=1 LIMIT 1");
 
             // $row = $stmt->fetch(PDO::FETCH_ASSOC); // It tries to resolve from app\Models\PDO class and fails. (Reolve by without PDO:: prefix)
@@ -60,7 +69,7 @@ class HomeModel
 
             return [
                 "source" => "error",
-                "data"   => $this->defaultHome()
+                "data"   => []
             ];
         }
     }
@@ -78,7 +87,7 @@ class HomeModel
 
         /** B. Try DB */
         $row = $this->getOnlyDB();
-        if ($row["source"] === "db" && !empty($row["data"])) {
+        if ($row["source"] === "db") {
             CacheService::save($this->cacheKey, $row["data"]);
             return $row;
         }
