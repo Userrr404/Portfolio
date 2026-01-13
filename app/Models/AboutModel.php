@@ -165,12 +165,12 @@ class AboutModel {
 
             if ($single) {
                 // Load one row
-                $stmt = $pdo->prepare("SELECT * FROM {$table} WHERE is_active = 0 LIMIT 1");
+                $stmt = $pdo->prepare("SELECT * FROM {$table} WHERE is_active = 1 LIMIT 1");
                 $stmt->execute();
                 $result = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
             } else {
                 // Load many rows
-                $stmt = $pdo->prepare("SELECT * FROM {$table} WHERE is_active = 0 ORDER BY sort_order ASC");
+                $stmt = $pdo->prepare("SELECT * FROM {$table} WHERE is_active = 1 ORDER BY sort_order ASC");
                 $stmt->execute();
                 $result = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
             }
@@ -306,7 +306,8 @@ class AboutModel {
             "main_description" => "I\u2019m a Full Stack Developer & Android Engineer bridging creativity with logic. My mission is to design systems that are fast, scalable, and enjoyable to use.",
             "secondary_description" => "With hands-on experience in PHP, MySQL, JavaScript, Tailwind, and Java, I craft secure and visually engaging web and mobile applications. I also have strong fundamentals in DSA and API development.",
             "cta_text" => "Download CV",
-            "cta_link" => "downloads/Yogesh_Lilake_Resume.pdf",
+            "cta_link" => "downloadcv",
+            "cv_file_path" => "downloads/Yogesh_Lilake_Resume.pdf",
             "profile_image" => "profile.jpg",
             "is_active" => 1
         ];

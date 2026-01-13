@@ -3,7 +3,8 @@
   "main_description": "I\u2019m a Full Stack Developer & Android Engineer bridging creativity with logic. My mission is to design systems that are fast, scalable, and enjoyable to use.",
   "secondary_description": "With hands-on experience in PHP, MySQL, JavaScript, Tailwind, and Java, I craft secure and visually engaging web and mobile applications. I also have strong fundamentals in DSA and API development.",
   "cta_text": "Download CV",
-  "cta_link": "downloads/Yogesh_Lilake_Resume.pdf",
+  "cta_link": "downloadcv",
+  "cv_file_path" : "downloads/Yogesh_Lilake_Resume.pdf",
   "profile_image": "profile.jpg",
   "is_active": 1
 }
