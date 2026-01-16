@@ -587,10 +587,10 @@ class ProjectModel {
             $pdo = DB::getInstance()->pdo();
 
             if (!$pdo) {
-                app_log("DC-03: ProjectModel@getBySlug DB unavailable", "error");
-                throw new \RuntimeException("DB unavailable");
+                app_log("DC-03: Project detail by getByslug is blocked — DB unavailable", "error");
+                return null; // HARD STOP
             }
-        
+
             $stmt = $pdo->prepare("
                 SELECT * 
                 FROM projects 
@@ -598,32 +598,16 @@ class ProjectModel {
                 LIMIT 1
             ");
             $stmt->execute(['slug' => $slug]);
+
             $project = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($project) {
                 CacheService::save($cacheKey, $project);
                 return $project;
             }
+
         } catch (Throwable $e) {
-            app_log("ProjectModel@getBySlug DB ERROR: " . $e->getMessage(), "error");
-        }
-
-        // JSON fallback
-        $jsonFile = safe_path('PROJECTS_DEFAULT_FILE');
-        if ($jsonFile && file_exists($jsonFile)) {
-            $json = json_decode(file_get_contents($jsonFile), true);
-            foreach ($json as $p) {
-                if (($p['slug'] ?? '') === $slug) {
-                    return $p;
-                }
-            }
-        }
-
-        //  C. HARD FALLBACK
-        foreach ($this->defaultProjects() as $p) {
-            if (($p['slug'] ?? '') === $slug) {
-                return $p;
-            }
+            app_log("ProjectModel@getBySlug fatal: " . $e->getMessage(), "critical");
         }
 
         return null;

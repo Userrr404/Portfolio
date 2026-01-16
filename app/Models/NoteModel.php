@@ -267,6 +267,11 @@ class NoteModel
         try {
             $pdo = DB::getInstance()->pdo();
 
+            if (!$pdo) {
+                app_log("DC-03: getNoteBySlug blocked (DB down)", "error");
+                return null; // HARD FAIL
+            }
+
             $stmt = $pdo->prepare("
                 SELECT 
                     n.*,
@@ -291,6 +296,11 @@ class NoteModel
         try {
             $pdo = DB::getInstance()->pdo();
 
+            if (!$pdo) {
+                app_log("DC-03: getTagsByNoteId blocked (DB down)", "error");
+                return null; // HARD FAIL
+            }
+
             $stmt = $pdo->prepare("
                 SELECT t.name
                 FROM note_tags t
@@ -310,6 +320,11 @@ class NoteModel
     {
         try {
             $pdo = DB::getInstance()->pdo();
+
+            if (!$pdo) {
+                app_log("DC-03: getRelatedNotes blocked (DB down)", "error");
+                return null; // HARD FAIL
+            }
 
             $stmt = $pdo->prepare("
                 SELECT id, title, slug
