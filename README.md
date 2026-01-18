@@ -65,6 +65,98 @@ results in:
   - Broken production pages
 This violates enterprise uptime guarantees.
 
+### ⚡ Cache Engine (Enterprise-Hardened)
+
+The cache system is fully self-healing and defensive by design.
+
+**Core Rules:**
+
+  1. **Cache is never trusted blindly**
+  2. **Any corruption → cache ignored + deleted**
+  3. **Cache failure never escalates to Safe Mode**
+  4. **Page always renders using fallback layers**
+
+### 🧨 Cache Corruption Detection (DC-01 → DC-07)
+
+The cache engine explicitly detects and handles all real-world corruption scenarios.
+
+Supported Corruption Classes
+DC Code	Description
+  DC-01	Invalid JSON (syntax corruption)
+  DC-02	Root structure invalid
+  DC-03	Partial cache write / missing payload
+  DC-04	Schema corruption (missing required fields)
+  DC-05	Semantic corruption (invalid business meaning)
+  DC-06	Cache expired (TTL auto-resolved)
+  DC-07	Cache corrupted but recoverable (treated as optimization failure)
+
+
+### 🔍 DC-07: Cache Corrupted (Invalid JSON)
+
+Why this exists
+Invalid cache files are common in real systems due to:
+  1. **Crashes during write**
+  2. **Disk I/O interruption**
+  3. **Manual file edits**
+  4. **Partial deployments**
+
+Setup
+  1. **Cache file contains invalid JSON**
+
+Expected Flow
+
+  Cache (invalid)
+    ↓
+  Cache ignored + deleted
+    ↓
+  DB
+    ↓
+  JSON defaults
+    ↓
+  Hard fallback (if required)
+
+
+Guaranteed Result
+
+  1. **Cache ignored**
+  2. **Error logged**
+  3. **Page renders normally**
+  4. **safe_mode = false**
+
+Cache corruption is treated as a recoverable optimization failure, not a system failure.
+
+### 🧩 Cache Validation Architecture
+
+Cache validation is split into infrastructure and business contracts.
+
+Infrastructure (CacheService)
+
+  1. **File existence**
+  2. **JSON syntax**
+  3. **Root structure**
+  4. **TTL expiry**
+  5. **Payload presence**
+
+Business Validators (app/CacheValidators/)
+
+  1. **Schema validation**
+  2. **Semantic validation**
+  3. **Cross-section protection**
+
+Validator Layer
+  app/CacheValidators/
+  ├── CacheValidatorInterface.php
+  ├── HeaderCacheValidator.php
+  ├── FooterCacheValidator.php
+  ├── *.php
+
+
+This separation ensures:
+
+  1. **CacheService never becomes a god-class**
+  2. **Business rules evolve independently**
+  3. **Cross-section corruption is prevented**
+
 ### 🔐 Safe Mode Architecture (Enterprise Fail-Safe UX Layer)
 
 This project implements a Safe Mode UI + Controller Architecture, inspired by real-world production systems (Google, Stripe, AWS dashboards).
@@ -295,6 +387,12 @@ All pages use:
 Portfolio/
 |
 |── app/ # This folder contains all backend application logic & It is the “brain” of your portfolio
+|    ├── CacheValidators/                   # All page cache validators class and functions
+|    │    ├── CacheValidatorInterface.php
+|    │    ├── HeaderCacheValidator.php
+|    │    ├── FooterCacheValidator.php
+|    |    └── *.php                         
+|    |
 |    ├── Controllers/            # 🎯 Page Controllers
 │    │   ├── HomeController.php       # Loads Homepage sections using unified flow`
 │    │   ├── AboutController.php      # Loads About page (DB → JSON → fallback`)

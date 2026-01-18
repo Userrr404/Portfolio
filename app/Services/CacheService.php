@@ -1,5 +1,9 @@
 <?php
 namespace app\Services;
+
+use app\CacheValidators\CacheValidatorInterface;
+use app\CacheValidators\HeaderCacheValidator;
+use app\CacheValidators\FooterCacheValidator;
 use Throwable;
 class CacheService {
 
@@ -34,38 +38,131 @@ class CacheService {
         return self::$version . "_" . $key;
     }
 
+    private static function destroy(string $file, string $log, string $level = "warning")
+    {
+        app_log($log, $level);
+        @unlink($file);
+        return false;
+    }
+
+
+    /* ============================================================
+     * VALIDATOR REGISTRY
+     * ============================================================ */
+
+    private static function validators(): array
+    {
+        return [
+            new HeaderCacheValidator(),
+            new FooterCacheValidator(),
+        ];
+    }
+
+    private static function validatePayload(string $cacheKey, array $payload): bool
+    {
+    foreach (self::validators() as $validator) {
+        if ($validator->supports($cacheKey)) {
+
+            $error = $validator->validate($payload);
+
+            if ($error !== null) {
+                app_log("{$error}: {$cacheKey}.json", "warning");
+                return false;
+            }
+        }
+    }
+    return true;
+    }
+
+
+
     /**
-     * Load cached data
-     * Returns false on missing/expired/invalid cache
+     * ============================================================
+     * LOAD CACHE ENTRY
+     * ============================================================
+     *
+     * Returns:
+     * - Cached payload on success
+     * - FALSE on any anomaly
+     *
+     * Strict Rule:
+     * - If cache integrity is questionable → delete it
+     *
+     * Cache is never trusted blindly.
      */
     public static function load(string $key)
     {
         self::ensureDir();
 
-        $key = self::sanitizeKey($key);
-        $file = self::$path . $key . ".json";
+        $safeKey = self::sanitizeKey($key);
+        $file = self::$path . $safeKey . ".json";
 
-        if (!file_exists($file)) return false;
+        /* ---------- CACHE MISS ---------- */
+        if (!file_exists($file)) {
+            return false;
+        }
 
         $json = @file_get_contents($file);
-        if (!$json) return false;
+
+        /* ---------- DC-03: PARTIAL WRITE ---------- */
+        if ($json === false || trim($json) === '') {
+            return self::destroy(
+                $file,
+                "DC-03 Partial cache write (empty): {$safeKey}.json"
+            );e an 180+ IQ and run multi billion dollar company.
+            So think like company design head andd
+        }
+
+        if (strlen($json) < 50) {
+            return self::destroy(
+                $file,
+                "DC-03 Partial cache write (truncated): {$safeKey}.json"
+            );
+        }
 
         $data = json_decode($json, true);
 
-        if (!is_array($data)) return false;
+        /* ---------- DC-01: JSON SYNTAX ---------- */
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return self::destroy(
+                $file,
+                "DC-01 JSON syntax corruption: {$safeKey}.json → " . json_last_error_msg()
+            );
+        }
 
-        // TTL check
-        if (isset($data["_expires"]) && $data["_expires"] < time()) {
-            unlink($file);
+        /* ---------- DC-02: ROOT STRUCTURE ---------- */
+        if (!is_array($data)) {
+            return self::destroy(
+                $file,
+                "DC-02 Cache root invalid: {$safeKey}.json"
+            );
+        }
+
+        /* ---------- TTL ---------- */
+        if (isset($data['_expires']) && $data['_expires'] < time()) {
+            return self::destroy(
+                $file,
+                "DC-06 Cache expired (TTL): {$safeKey}.json",
+                "info"
+            );
+        }
+
+        /* ---------- PAYLOAD ---------- */
+        if (!isset($data['payload']) || !is_array($data['payload'])) {
+            return self::destroy(
+                $file,
+                "DC-03 Payload missing or corrupted: {$safeKey}.json"
+            );
+        }
+
+        /* ---------- BUSINESS VALIDATION ---------- */
+        if (!self::validatePayload($safeKey, $data['payload'])) {
+            @unlink($file);
             return false;
         }
 
-        // Ensure payload exists
-        if (empty($data["payload"]) || !is_array($data["payload"])) {
-            return false;
-        }
-
-        return $data["payload"];
+        /* ---------- ACCEPT ---------- */
+        return $data['payload'];
     }
 
     /**
